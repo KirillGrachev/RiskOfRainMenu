@@ -1,8 +1,8 @@
 using HarmonyLib;
 using RoR2;
 
-namespace SandboxMenu
-{
+namespace SandboxMenu {
+
     /// <summary>
     /// Хуки учёта дропа, созданного меню.
     ///
@@ -17,38 +17,40 @@ namespace SandboxMenu
     /// Обе цели - приватные OnEnable, объявленные в самих типах игры: Harmony
     /// патчит их по имени, без привязки к адресам.
     /// </summary>
-    internal static class DropHooks
-    {
+    internal static class DropHooks {
+
         /// <summary>Капля дропа родилась: забираем её в реестр, если ждали.</summary>
         [HarmonyPatch(typeof(PickupDropletController), "OnEnable")]
-        internal static class DropletOnEnable
-        {
-            private static void Postfix(PickupDropletController __instance)
-            {
-                try
-                {
-                    if (__instance != null && SpawnRegistry.ConsumeDropArm())
-                    {
+        internal static class DropletOnEnable {
+
+            private static void Postfix(PickupDropletController __instance) {
+
+                try {
+                    if (__instance != null && SpawnRegistry.ConsumeDropArm()) {
                         SpawnRegistry.TrackDroplet(__instance.gameObject);
                     }
+                } catch (System.Exception exception) {
+                    GameApi.WarnOnce("DropletOnEnable", exception);
                 }
-                catch (System.Exception e) { GameApi.WarnOnce("DropletOnEnable", e); }
+
             }
         }
 
         /// <summary>Пикап родился: усыновляем, если рядом недавно села капля меню.</summary>
         [HarmonyPatch(typeof(GenericPickupController), "OnEnable")]
-        internal static class PickupOnEnable
-        {
-            private static void Postfix(GenericPickupController __instance)
-            {
-                try
-                {
-                    if (__instance != null) SpawnRegistry.AdoptPickup(__instance.gameObject);
+        internal static class PickupOnEnable {
+
+            private static void Postfix(GenericPickupController __instance) {
+
+                try {
+                    if (__instance != null) {
+                        SpawnRegistry.AdoptPickup(__instance.gameObject);
+                    }
+                } catch (System.Exception exception) {
+                    GameApi.WarnOnce("PickupOnEnable", exception);
                 }
-                catch (System.Exception e) { GameApi.WarnOnce("PickupOnEnable", e); }
+
             }
         }
     }
 }
-

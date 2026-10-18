@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.IO;
 using BepInEx;
 
-namespace SandboxMenu
-{
+namespace SandboxMenu {
+
     /// <summary>
     /// Строки меню и чат-сообщений: русский и английский.
     ///
@@ -22,23 +22,27 @@ namespace SandboxMenu
     /// Формат сообщений чата - как в остальных плагинах автора: префикс из
     /// двух цветных букв, разделитель, одна строка сути (GameApi.Prefix).
     /// </summary>
-    internal static class Texts
-    {
+    internal static class Texts {
+
         public static bool Russian = true;
 
         private static bool _loaded;
         private static readonly Dictionary<string, string> _overrideRu = new Dictionary<string, string>();
         private static readonly Dictionary<string, string> _overrideEn = new Dictionary<string, string>();
 
-        public static string T(string ru, string en)
-        {
+        /// <summary>Пара строк: русская и английская, с учётом файла перевода.</summary>
+        public static string T(string russian, string english) {
+
             EnsureLang();
-            string v;
-            if (Russian)
-            {
-                return _overrideRu.TryGetValue(ru, out v) ? v : ru;
+
+            string value;
+
+            if (Russian) {
+                return _overrideRu.TryGetValue(russian, out value) ? value : russian;
             }
-            return _overrideEn.TryGetValue(ru, out v) ? v : en;
+
+            return _overrideEn.TryGetValue(russian, out value) ? value : english;
+
         }
 
         /// <summary>
@@ -46,50 +50,69 @@ namespace SandboxMenu
         /// создаёт его из вызовов, которые плагин уже запросил к этому моменту,
         /// плюс встроенный минимум, чтобы переводчику было от чего править.
         /// </summary>
-        private static void EnsureLang()
-        {
-            if (_loaded) return;
-            _loaded = true;
-            try
-            {
-                string dir = Path.Combine(Paths.PluginPath, "lang");
-                string path = Path.Combine(dir, "lang.tsv");
-                if (File.Exists(path))
-                {
-                    foreach (var line in File.ReadAllLines(path))
-                    {
-                        if (string.IsNullOrEmpty(line) || line[0] == '#') continue;
-                        int tab = line.IndexOf('\t');
-                        if (tab <= 0 || tab == line.Length - 1) continue;
-                        string ru = line.Substring(0, tab);
-                        string en = line.Substring(tab + 1);
-                        _overrideRu[ru] = ru;
-                        _overrideEn[ru] = en;
-                    }
-                    GameApi.Info($"lang: loaded {path}");
-                }
-                else
-                {
-                    Directory.CreateDirectory(dir);
-                    File.WriteAllText(path,
-                        "# RoR2 Sandbox Menu localization: russian<TAB>english.\n" +
-                        "# Edit the values to reword either language; they override the built-in pairs.\n");
-                    GameApi.Info($"lang: created empty {path}");
-                }
+        private static void EnsureLang() {
+
+            if (_loaded) {
+                return;
             }
-            catch (Exception e) { GameApi.WarnOnce("Texts.EnsureLang", e); }
+
+            _loaded = true;
+
+            try {
+
+                string directory = Path.Combine(Paths.PluginPath, "lang");
+                string path = Path.Combine(directory, "lang.tsv");
+
+                if (File.Exists(path)) {
+
+                    foreach (var line in File.ReadAllLines(path)) {
+
+                        if (string.IsNullOrEmpty(line) || line[0] == '#') {
+                            continue;
+                        }
+
+                        int tabPosition = line.IndexOf('\t');
+
+                        if (tabPosition <= 0 || tabPosition == line.Length - 1) {
+                            continue;
+                        }
+
+                        string russian = line.Substring(0, tabPosition);
+                        string english = line.Substring(tabPosition + 1);
+
+                        _overrideRu[russian] = russian;
+                        _overrideEn[russian] = english;
+
+                    }
+
+                    GameApi.Info($"lang: loaded {path}");
+
+                } else {
+
+                    Directory.CreateDirectory(directory);
+                    File.WriteAllText(path,
+                            "# RoR2 Sandbox Menu localization: russian<TAB>english.\n" +
+                            "# Edit the values to reword either language; they override the built-in pairs.\n");
+                    GameApi.Info($"lang: created empty {path}");
+
+                }
+
+            } catch (Exception exception) {
+                GameApi.WarnOnce("Texts.EnsureLang", exception);
+            }
+
         }
 
         /// <summary>Дописать недостающую пару в файл (вызывать не нужно: файл правят руками).</summary>
-        public static void AppendMissing(string ru, string en)
-        {
-            try
-            {
+        public static void AppendMissing(string russian, string english) {
+
+            try {
                 string path = Path.Combine(Paths.PluginPath, "lang", "lang.tsv");
-                File.AppendAllText(path, ru + "\t" + en + "\n");
+                File.AppendAllText(path, russian + "\t" + english + "\n");
+            } catch (Exception exception) {
+                GameApi.WarnOnce("Texts.AppendMissing", exception);
             }
-            catch (Exception e) { GameApi.WarnOnce("Texts.AppendMissing", e); }
+
         }
     }
 }
-

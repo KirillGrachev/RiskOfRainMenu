@@ -1,7 +1,7 @@
 using UnityEngine;
 
-namespace SandboxMenu
-{
+namespace SandboxMenu {
+
     /// <summary>
     /// Вся визуальная тема меню в одном месте: цвета, шины-заголовки, строки.
     ///
@@ -9,8 +9,8 @@ namespace SandboxMenu
     /// (Texture2D 1x1 как фон шин). Держим их статикой: OnGUI вызывается каждый
     /// кадр, аллокации стилей/текстур в кадре - прямой путь к GC-пикам.
     /// </summary>
-    internal static class Theme
-    {
+    internal static class Theme {
+
         public static GUIStyle Window;
         public static GUIStyle Title;
         public static GUIStyle HeaderBlue;
@@ -25,13 +25,17 @@ namespace SandboxMenu
 
         public static bool Ready { get; private set; }
 
-        public static void Ensure()
-        {
-            if (Ready) return;
+        /// <summary>Создаёт все стили темы один раз; повторные вызовы бесплатны.</summary>
+        public static void Ensure() {
+
+            if (Ready) {
+                return;
+            }
+
             Ready = true;
 
             Window = new GUIStyle(GUI.skin.window);
-            Window.normal.background = Tex(0.09f, 0.10f, 0.13f, 1f);
+            Window.normal.background = CreateTexture(0.09f, 0.10f, 0.13f, 1f);
             Window.padding = new RectOffset(8, 8, 6, 8);
 
             Title = new GUIStyle(GUI.skin.label);
@@ -39,9 +43,9 @@ namespace SandboxMenu
             Title.richText = true;
             Title.alignment = TextAnchor.MiddleLeft;
 
-            HeaderBlue = Header(0.13f, 0.42f, 0.62f);
-            HeaderRed = Header(0.62f, 0.24f, 0.27f);
-            HeaderPurple = Header(0.40f, 0.29f, 0.60f);
+            HeaderBlue = CreateHeaderStyle(0.13f, 0.42f, 0.62f);
+            HeaderRed = CreateHeaderStyle(0.62f, 0.24f, 0.27f);
+            HeaderPurple = CreateHeaderStyle(0.40f, 0.29f, 0.60f);
 
             Name = new GUIStyle(GUI.skin.label);
             Name.wordWrap = false;
@@ -66,28 +70,34 @@ namespace SandboxMenu
 
             Field = new GUIStyle(GUI.skin.textField);
             Field.fontSize = 12;
+
         }
 
-        private static GUIStyle Header(float r, float g, float b)
-        {
-            var s = new GUIStyle(GUI.skin.box);
-            s.normal.background = Tex(r, g, b, 1f);
-            s.normal.textColor = Color.white;
-            s.fontStyle = FontStyle.Bold;
-            s.fontSize = 12;
-            s.alignment = TextAnchor.MiddleLeft;
-            s.padding = new RectOffset(6, 4, 2, 2);
-            s.margin = new RectOffset(0, 0, 6, 4);
-            return s;
+        /// <summary>Цветная шина-заголовок раздела из цвета в float-каналах.</summary>
+        private static GUIStyle CreateHeaderStyle(float red, float green, float blue) {
+
+            var headerStyle = new GUIStyle(GUI.skin.box);
+            headerStyle.normal.background = CreateTexture(red, green, blue, 1f);
+            headerStyle.normal.textColor = Color.white;
+            headerStyle.fontStyle = FontStyle.Bold;
+            headerStyle.fontSize = 12;
+            headerStyle.alignment = TextAnchor.MiddleLeft;
+            headerStyle.padding = new RectOffset(6, 4, 2, 2);
+            headerStyle.margin = new RectOffset(0, 0, 6, 4);
+
+            return headerStyle;
+
         }
 
-        private static Texture2D Tex(float r, float g, float b, float a)
-        {
-            var t = new Texture2D(1, 1);
-            t.SetPixel(0, 0, new Color(r, g, b, a));
-            t.Apply();
-            return t;
+        /// <summary>Однопиксельная текстура цвета - фон для стилей.</summary>
+        private static Texture2D CreateTexture(float red, float green, float blue, float alpha) {
+
+            var texture = new Texture2D(1, 1);
+            texture.SetPixel(0, 0, new Color(red, green, blue, alpha));
+            texture.Apply();
+
+            return texture;
+
         }
     }
 }
-
