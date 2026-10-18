@@ -1,0 +1,97 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Сборка плагина для Risk of Rain 2 (BepInEx 5, Unity Mono).
+
+    TargetFramework = netstandard2.1, потому что RoR2.dll ссылается именно на
+    netstandard 2.1.0.0 - так же целятся и штатные моды игры.
+
+    Пути к внешним сборкам задаются через свойства, чтобы не вшивать их в проект:
+      dotnet build -c Release \
+        -p:BepInExDir=/путь/к/BepInEx/core \
+        -p:RoR2ManagedDir=/путь/к/Risk of Rain 2_Data/Managed
+
+    Ссылки на игровые сборки помечены Private=false: они уже есть в папке игры,
+    копировать их рядом с плагином не нужно (и нельзя - будет конфликт версий).
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <AssemblyName>RoR2SandboxMenu</AssemblyName>
+    <RootNamespace>SandboxMenu</RootNamespace>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <Product>Risk of Rain 2 Sandbox Menu</Product>
+    <Version>1.0.0</Version>
+    <NoWarn>$(NoWarn);NU1701;CS0436;CS1591</NoWarn>
+
+    <!-- ВАЖНО: дефолтный glob (**/*.cs) подхватил бы stubs/HlapiStub.cs и
+         вкомпилировал UnityEngine.Networking.* ВНУТРЬ плагина. Тогда в рантайме
+         NetworkServer.active резолвился бы в наш стаб (всегда false), и плагин
+         молча отказывался бы что-либо делать. Компилируем только src/. -->
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="src/**/*.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33"
+                      IncludeAssets="compile" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(BepInExDir)' != ''">
+    <Reference Include="BepInEx">
+      <HintPath>$(BepInExDir)/BepInEx.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="0Harmony">
+      <HintPath>$(BepInExDir)/0Harmony.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+
+  <!--
+    com.unity.multiplayer-hlapi.Runtime нужен компилятору, чтобы резолвить
+    базовые типы RoR2: CharacterBody / CharacterMaster / Inventory наследуют
+    UnityEngine.Networking.NetworkBehaviour. В NuGet этой сборки нет, она лежит
+    только в папке игры.
+
+    Порядок: настоящая сборка из <game>_Data/Managed, иначе compile-time стаб
+    из stubs/ (см. stubs/HlapiStub.csproj). Стаб собирается автоматически
+    таргетом BuildHlapiStubIfNeeded ДО ResolveAssemblyReferences - иначе ссылка
+    не попадёт в список для компилятора.
+
+    Private=false: в папку плагина не копируется. В рантайме Mono резолвит
+    ссылку в настоящую сборку из Managed, поэтому стаб в игру попадать не должен.
+  -->
+  <PropertyGroup>
+    <HlapiStubOut>$(MSBuildThisFileDirectory)stubs/bin/Release/</HlapiStubOut>
+    <HlapiAssembly Condition="'$(HlapiAssembly)' == '' And '$(RoR2ManagedDir)' != '' And Exists('$(RoR2ManagedDir)/com.unity.multiplayer-hlapi.Runtime.dll')">$(RoR2ManagedDir)/com.unity.multiplayer-hlapi.Runtime.dll</HlapiAssembly>
+    <HlapiAssembly Condition="'$(HlapiAssembly)' == ''">$(HlapiStubOut)com.unity.multiplayer-hlapi.Runtime.dll</HlapiAssembly>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Reference Include="com.unity.multiplayer-hlapi.Runtime">
+      <HintPath>$(HlapiAssembly)</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+  <Target Name="BuildHlapiStubIfNeeded" BeforeTargets="ResolveAssemblyReferences"
+          Condition="!Exists('$(HlapiAssembly)') And Exists('$(MSBuildThisFileDirectory)stubs/HlapiStub.csproj')">
+    <Message Importance="high" Text="hlapi not found in the game folder - building the compile-time stub into stubs/bin/ (never shipped to the game)" />
+    <MSBuild Projects="$(MSBuildThisFileDirectory)stubs/HlapiStub.csproj" Targets="Restore;Build"
+             Properties="Configuration=Release;BaseIntermediateOutputPath=$(MSBuildThisFileDirectory)stubs/obj/;BaseOutputPath=$(MSBuildThisFileDirectory)stubs/bin/;RestorePackagesPath=$(RestorePackagesPath)" />
+  </Target>
+
+  <ItemGroup Condition="'$(RoR2ManagedDir)' != ''">
+    <Reference Include="RoR2">
+      <HintPath>$(RoR2ManagedDir)/RoR2.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

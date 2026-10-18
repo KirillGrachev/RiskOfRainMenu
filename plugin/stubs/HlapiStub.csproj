@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!--
+    Compile-time stub for com.unity.multiplayer-hlapi.Runtime (Unity's old UNET).
+
+    Why: RoR2.dll references this assembly (29 types, version 1.0.0.0), so the
+    C# compiler needs it to resolve base types of RoR2 classes such as
+    CharacterBody / CharacterMaster / Inventory (they derive from
+    UnityEngine.Networking.NetworkBehaviour). The package is not on NuGet and
+    ships only inside the game folder.
+
+    This DLL is COMPILE-TIME ONLY. It must never be copied next to the plugin:
+    at runtime Mono resolves the reference against the real assembly from
+    <game>/Risk of Rain 2_Data/Managed/. Assembly identity is matched exactly
+    (name com.unity.multiplayer-hlapi.Runtime, version 1.0.0.0, no strong name).
+
+    Only members actually used by the plugin are declared with real signatures;
+    the rest are placeholders that exist so that type resolution succeeds.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <AssemblyName>com.unity.multiplayer-hlapi.Runtime</AssemblyName>
+    <RootNamespace>UnityEngine.Networking</RootNamespace>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <Version>1.0.0.0</Version>
+    <GenerateAssemblyInfo>true</GenerateAssemblyInfo>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <NoWarn>$(NoWarn);CS0067;CS0108;CS0114;CS0649</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="HlapiStub.cs" />
+    <PackageReference Include="UnityEngine.Modules" Version="2021.3.33"
+                      IncludeAssets="compile" PrivateAssets="all" />
+  </ItemGroup>
+</Project>

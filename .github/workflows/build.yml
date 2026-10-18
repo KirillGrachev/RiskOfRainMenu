@@ -1,0 +1,144 @@
+name: Build menu dll
+
+# Сборка RoR2SandboxMenu.dll в GitHub Actions.
+#
+# Плагин компилируется против настоящей игровой сборки RoR2.dll: это одновременно
+# сборка и API-чек (если игру обновили и метод переименован, CI упадёт здесь, а не
+# молча в игре). Файлы игры НЕ лежат в репозитории: их кладёт в кэш Actions
+# воркфлоу sync-game-dll.yml, запущенный вручную на self-hosted раннере с игрой.
+#
+# Поэтому:
+#   кэш есть   -> job build собирает dll и выкладывает артефакт;
+#                 job publish-latest на каждом пуше в main обновляет постоянный
+#                 релиз «latest» с актуальной dll; по тегу v* job release
+#                 публикует отдельный номерной релиз;
+#   кэша нет   -> job no-refs печатает понятную инструкцию и завершается успешно,
+#                 чтобы первый push не выглядел сломанным.
+
+on:
+  push:
+    branches: [ main, master ]
+    tags: [ 'v*' ]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  game-refs:
+    name: Look for the cached game assembly
+    runs-on: ubuntu-latest
+    outputs:
+      # cache-matched-key, а не cache-hit: кэш сохраняется с ключом
+      # ror2-managed-v1-<sha256>, а восстанавливаемся по префиксу
+      hit: ${{ steps.cache.outputs.cache-matched-key != '' }}
+    steps:
+      - name: Restore RoR2.dll + BepInEx core from the Actions cache
+        id: cache
+        uses: actions/cache/restore@v4
+        with:
+          path: game-managed
+          key: ror2-managed-v1-restore-${{ github.run_id }}
+          restore-keys: ror2-managed-v1-
+
+  no-refs:
+    name: No game assembly in cache (info)
+    runs-on: ubuntu-latest
+    needs: game-refs
+    if: needs.game-refs.outputs.hit != 'true'
+    steps:
+      - name: Explain how to enable builds
+        run: |
+          echo "::warning::В кэше Actions нет RoR2.dll - сборка пропущена."
+          echo "Один раз запустите workflow 'Sync game assembly' (sync-game-dll.yml)"
+          echo "на self-hosted раннере с установленной игрой и BepInEx 5:"
+          echo "  Actions -> Sync game assembly -> Run workflow -> путь к папке игры."
+          echo "После этого каждый push будет собирать RoR2SandboxMenu.dll автоматически."
+
+  build:
+    name: Build RoR2SandboxMenu.dll
+    runs-on: ubuntu-latest
+    needs: game-refs
+    if: needs.game-refs.outputs.hit == 'true'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore the game assembly cache
+        uses: actions/cache/restore@v4
+        with:
+          path: game-managed
+          key: ror2-managed-v1-restore-${{ github.run_id }}
+          restore-keys: ror2-managed-v1-
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Build (compile-time API check against the game build)
+        run: |
+          dotnet build plugin/RoR2SandboxMenu.csproj -c Release -nologo \
+            -p:RoR2ManagedDir="$GITHUB_WORKSPACE/game-managed" \
+            -p:BepInExDir="$GITHUB_WORKSPACE/game-managed/bepinex"
+
+      - name: Collect the dll
+        run: |
+          mkdir -p dist
+          find plugin/bin -name 'RoR2SandboxMenu.dll' -print -quit \
+            | xargs -I{} cp {} dist/RoR2SandboxMenu.dll
+          ls -la dist
+          sha256sum dist/RoR2SandboxMenu.dll
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RoR2SandboxMenu-dll
+          path: dist/RoR2SandboxMenu.dll
+
+  publish-latest:
+    name: Update the continuous "latest" release
+    runs-on: ubuntu-latest
+    needs: [ game-refs, build ]
+    if: github.ref == 'refs/heads/main' && needs.game-refs.outputs.hit == 'true'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: RoR2SandboxMenu-dll
+          path: dist
+
+      - name: Republish the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum RoR2SandboxMenu.dll > SHA256SUMS.txt
+          gh release delete latest --yes --cleanup-tag --repo "${{ github.repository }}" || true
+          gh release create latest             --target "$GITHUB_SHA"             --title "Latest menu build"             --notes "Актуальная сборка последнего коммита main. RoR2SandboxMenu.dll кладётся в BepInEx/plugins/. Коммит: $GITHUB_SHA"             --repo "${{ github.repository }}"             RoR2SandboxMenu.dll SHA256SUMS.txt
+
+  release:
+    name: Publish GitHub Release
+    runs-on: ubuntu-latest
+    needs: [ game-refs, build ]
+    if: startsWith(github.ref, 'refs/tags/v') && needs.game-refs.outputs.hit == 'true'
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: RoR2SandboxMenu-dll
+          path: dist
+
+      - name: Package and publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          zip -r RoR2SandboxMenu-${GITHUB_REF_NAME}.zip RoR2SandboxMenu.dll
+          sha256sum RoR2SandboxMenu.dll RoR2SandboxMenu-${GITHUB_REF_NAME}.zip > SHA256SUMS.txt
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "RoR2 Sandbox Menu ${GITHUB_REF_NAME}" \
+            --notes "Сборка против игровой сборки из кэша Actions. dll кладётся в BepInEx/plugins." \
+            RoR2SandboxMenu-${GITHUB_REF_NAME}.zip SHA256SUMS.txt

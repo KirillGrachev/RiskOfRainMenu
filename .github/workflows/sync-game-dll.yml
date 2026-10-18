@@ -1,0 +1,61 @@
+name: Sync game assembly
+
+# Кладёт RoR2.dll (и BepInEx core) из установленной игры в кэш GitHub Actions,
+# чтобы job 'build' в build.yml компилировал плагин против настоящей игровой
+# сборки: сборка здесь работает как API-чек против обновлений игры.
+#
+# Запускается ВРУЧНУЮ на self-hosted раннере, на машине с игрой (Actions ->
+# Sync game assembly -> Run workflow). Файлы игры остаются внутри кэша
+# конкретного репозитория и не попадают ни в репозиторий, ни в артефакты,
+# ни в релизы.
+#
+# После обновления игры: запустить ещё раз - ключ кэша включает sha256 сборки.
+
+on:
+  workflow_dispatch:
+    inputs:
+      game_dir:
+        description: 'Path to the game folder on the runner'
+        required: true
+        default: 'D:\SteamLibrary\steamapps\common\Risk of Rain 2'
+
+jobs:
+  sync:
+    name: Copy game assembly into the Actions cache
+    runs-on: [ self-hosted, windows ]
+    steps:
+      - name: Locate and copy
+        shell: pwsh
+        run: |
+          $game = "${{ github.event.inputs.game_dir }}"
+          $managed = Get-ChildItem -Path $game -Directory -Filter "*_Data" |
+                     ForEach-Object { Join-Path $_.FullName "Managed" } |
+                     Where-Object { Test-Path (Join-Path $_ "RoR2.dll") } |
+                     Select-Object -First 1
+          if (-not $managed) { throw "RoR2.dll not found under $game" }
+
+          New-Item -ItemType Directory -Force -Path game-managed/bepinex | Out-Null
+          Copy-Item (Join-Path $managed "RoR2.dll") game-managed/
+          Copy-Item (Join-Path $managed "com.unity.multiplayer-hlapi.Runtime.dll") game-managed/ -ErrorAction SilentlyContinue
+
+          $bex = Join-Path (Split-Path (Split-Path $managed)) "BepInEx\core"
+          if (Test-Path $bex) { Copy-Item "$bex\*.dll" game-managed/bepinex/ }
+          if (-not (Test-Path (Join-Path "game-managed/bepinex" "BepInEx.dll"))) {
+            throw "BepInEx\core not found under the game folder - install BepInEx 5 x64 first"
+          }
+
+          Get-ChildItem -Recurse game-managed | Select-Object FullName, Length
+
+      - name: Record the build identity
+        shell: pwsh
+        run: |
+          $sha = (Get-FileHash game-managed/RoR2.dll -Algorithm SHA256).Hash.ToLower()
+          $sha | Out-File -Encoding ascii game-managed/SHA256.txt
+          "sha256=$sha" | Out-File -Encoding ascii -Append $env:GITHUB_ENV
+          Write-Host "RoR2.dll sha256 = $sha"
+
+      - name: Save to cache
+        uses: actions/cache/save@v4
+        with:
+          path: game-managed
+          key: ror2-managed-v1-${{ env.sha256 }}
