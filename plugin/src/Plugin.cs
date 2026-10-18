@@ -215,3 +215,4 @@ namespace SandboxMenu
         public const string Name = "RoR2 Sandbox Menu";
     }
 }
+

@@ -140,3 +140,4 @@ UserProfile.HasUnlockable возвращает true, пока включено	U
 убирает метки «new» в меню игры	removes 'new' markers in game menus
 удалить клонов всех игроков	remove every player's clones
 удалить клонов цели: тело и master	remove the target's clones: body and master
+

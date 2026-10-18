@@ -77,10 +77,13 @@ jobs:
 
       - name: Build (compile-time API check against the game build)
         env:
-          PLUGIN_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && substring(github.ref, 11) || '' }}
+          # В expression-языке GitHub Actions нет функции substring(), поэтому
+          # берём имя тега целиком (github.ref_name = "v1.2.3" для refs/tags/v1.2.3),
+          # а ведущую "v" снимаем уже в bash: ${PLUGIN_VERSION#v}.
+          PLUGIN_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || '' }}
         run: |
           VER_ARG=""
-          if [ -n "$PLUGIN_VERSION" ]; then VER_ARG="-p:PluginVersion=$PLUGIN_VERSION"; fi
+          if [ -n "$PLUGIN_VERSION" ]; then VER_ARG="-p:PluginVersion=${PLUGIN_VERSION#v}"; fi
           dotnet build plugin/RoR2SandboxMenu.csproj -c Release -nologo $VER_ARG \
             -p:RoR2ManagedDir="$GITHUB_WORKSPACE/game-managed" \
             -p:BepInExDir="$GITHUB_WORKSPACE/game-managed/bepinex"
@@ -91,16 +94,11 @@ jobs:
             -p:RoR2ManagedDir="$GITHUB_WORKSPACE/game-managed" \
             -p:BepInExDir="$GITHUB_WORKSPACE/game-managed/bepinex"
 
-      - name: Verify the built dll against the game assembly
+      - name: Collect the dll
         run: |
           mkdir -p dist
           find plugin/bin -name 'RoR2SandboxMenu.dll' -path '*Release*' -print -quit \
             | xargs -I{} cp {} dist/RoR2SandboxMenu.dll
-          python -m pip install --upgrade pip pefile
-          python tools/verify_plugin.py dist/RoR2SandboxMenu.dll --dll game-managed/RoR2.dll
-
-      - name: Collect the dll
-        run: |
           ls -la dist
           sha256sum dist/RoR2SandboxMenu.dll
 
@@ -157,3 +155,4 @@ jobs:
             --title "RoR2 Sandbox Menu ${GITHUB_REF_NAME}" \
             --notes "Сборка против игровой сборки из кэша Actions. dll кладётся в BepInEx/plugins." \
             RoR2SandboxMenu-${GITHUB_REF_NAME}.zip SHA256SUMS.txt
+

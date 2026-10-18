@@ -79,7 +79,10 @@ jobs:
 
   sync-url:
     name: Download the game assembly from ROR2_REFS_URL
-    if: github.event.inputs.source == 'url' && secrets.ROR2_REFS_URL != ''
+    # Контекст secrets недоступен в if-условиях jobs/steps (ошибка
+    # «Unrecognized named-value: 'secrets'»), поэтому наличие секрета
+    # проверяется внутри первого шага.
+    if: github.event.inputs.source == 'url'
     runs-on: ubuntu-latest
     steps:
       - name: Download and unpack
@@ -87,6 +90,10 @@ jobs:
           REFS_URL: ${{ secrets.ROR2_REFS_URL }}
         run: |
           set -e
+          if [ -z "$REFS_URL" ]; then
+            echo "::error::Секрет ROR2_REFS_URL не задан: Settings -> Secrets and variables -> Actions."
+            exit 1
+          fi
           mkdir -p game-managed
           curl -sSL -o refs.zip "$REFS_URL"
           python3 - <<'PY'
@@ -127,3 +134,4 @@ jobs:
         with:
           path: game-managed
           key: ror2-managed-v1-${{ env.sha256 }}
+
