@@ -57,9 +57,10 @@ jobs:
       - name: Explain how to enable builds
         run: |
           echo "::warning::В кэше Actions нет RoR2.dll - сборка пропущена."
-          echo "Один раз запустите workflow 'Sync game assembly' (sync-game-dll.yml)"
-          echo "на self-hosted раннере с установленной игрой и BepInEx 5:"
-          echo "  Actions -> Sync game assembly -> Run workflow -> путь к папке игры."
+          echo "Один раз запустите workflow 'Sync game assembly' (sync-game-dll.yml):"
+          echo "  source=runner  self-hosted раннер с игрой: путь к папке игры;"
+          echo "  source=draft   refs.zip приложен к черновому релизу (tag game-refs);"
+          echo "  source=url     секрет ROR2_REFS_URL со ссылкой на архив."
           echo "После этого каждый push будет собирать RoR2SandboxMenu.dll автоматически."
 
   build:
@@ -94,7 +95,9 @@ jobs:
             -p:RoR2ManagedDir="$GITHUB_WORKSPACE/game-managed" \
             -p:BepInExDir="$GITHUB_WORKSPACE/game-managed/bepinex"
 
-      - name: Unit tests (protocol codec, clamps, rate limit)
+      - name: Unit tests + game refs integration checks
+        env:
+          GAME_REFS_DIR: ${{ github.workspace }}/game-managed
         run: |
           dotnet test tests/RoR2SandboxMenu.Tests.csproj -c Release -nologo \
             -p:RoR2ManagedDir="$GITHUB_WORKSPACE/game-managed" \

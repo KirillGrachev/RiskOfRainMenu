@@ -7,10 +7,14 @@ name: Sync game assembly
 # Файлы игры НЕ попадают ни в репозиторий, ни в артефакты, ни в релизы:
 # они остаются только внутри кэша конкретного репозитория.
 #
-# Два способа наполнить кэш (Actions -> Sync game assembly -> Run workflow):
+# Три способа наполнить кэш (Actions -> Sync game assembly -> Run workflow):
 #
 #   source = runner   self-hosted раннер на машине с игрой (Windows):
 #                     скрипт сам заберёт RoR2.dll и BepInEx\core из папки игры;
+#   source = draft    refs.zip приложен к черновому релизу этого репозитория
+#                     (Releases -> Draft a new release, tag game-refs, НЕ
+#                     публиковать): черновик не виден публике, игровая сборка
+#                     не публикуется, скачивается токеном самого workflow;
 #   source = url      без раннера: workflow скачает архив с игрой-сборкой по
 #                     ссылке из секрета ROR2_REFS_URL (Settings -> Secrets and
 #                     variables -> Actions). Архив (zip): в корне RoR2.dll,
@@ -35,6 +39,7 @@ on:
         options:
           - runner
           - url
+          - draft
       game_dir:
         description: 'Path to the game folder on the runner (source=runner)'
         required: false
@@ -140,3 +145,63 @@ jobs:
           path: game-managed
           key: ror2-managed-v1-${{ env.sha256 }}
 
+  sync-draft:
+    name: Download refs.zip from the draft release game-refs
+    # Черновой релиз не виден публике, поэтому игровая сборка не публикуется:
+    # asset refs.zip скачивается токеном самого workflow (contents: read).
+    if: github.event.inputs.source == 'draft'
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Download and unpack
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          mkdir -p game-managed
+          ASSET_URL=$(gh api "repos/${{ github.repository }}/releases" \
+                      --jq '.[] | select(.draft == true) | .assets[] | select(.name == "refs.zip") | .url' | head -n 1)
+          if [ -z "$ASSET_URL" ]; then
+            echo "::error::Черновой релиз с asset refs.zip не найден: Releases -> Draft a new release (tag game-refs, НЕ публиковать) -> приложить refs.zip."
+            exit 1
+          fi
+          curl -sSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/octet-stream" -o refs.zip "$ASSET_URL"
+          python3 - <<'PY'
+          import zipfile, os, shutil
+          with zipfile.ZipFile("refs.zip") as z:
+              names = z.namelist()
+              def find(fn):
+                  return next((n for n in names if os.path.basename(n) == fn), None)
+              ror2 = find("RoR2.dll")
+              if not ror2:
+                  raise SystemExit("RoR2.dll not found inside the archive")
+              with z.open(ror2) as src, open("game-managed/RoR2.dll", "wb") as dst:
+                  shutil.copyfileobj(src, dst)
+              for fn in ("BepInEx.dll", "0Harmony.dll"):
+                  n = find(fn)
+                  if n:
+                      os.makedirs("game-managed/bepinex", exist_ok=True)
+                      with z.open(n) as src, open(f"game-managed/bepinex/{fn}", "wb") as dst:
+                          shutil.copyfileobj(src, dst)
+              hl = find("com.unity.multiplayer-hlapi.Runtime.dll")
+              if hl:
+                  with z.open(hl) as src, open("game-managed/" + os.path.basename(hl), "wb") as dst:
+                      shutil.copyfileobj(src, dst)
+          if not os.path.exists("game-managed/bepinex/BepInEx.dll"):
+              raise SystemExit("bepinex/BepInEx.dll not found inside the archive")
+          print("unpacked:", sorted(os.listdir("game-managed")))
+          PY
+
+      - name: Record the build identity
+        run: |
+          sha=$(sha256sum game-managed/RoR2.dll | cut -d' ' -f1)
+          echo "$sha" > game-managed/SHA256.txt
+          echo "sha256=$sha" >> "$GITHUB_ENV"
+          echo "RoR2.dll sha256 = $sha"
+
+      - name: Save to cache
+        uses: actions/cache/save@v6
+        with:
+          path: game-managed
+          key: ror2-managed-v1-${{ env.sha256 }}

@@ -1,13 +1,17 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <!--
-    Unit-тесты чистой логики протокола (кодек запросов, клампы, rate-limit).
+    Unit-тесты чистой логики протокола (кодек запросов, клампы, rate-limit)
+    плюс интеграционные проверки против настоящей игровой сборки
+    (GameRefsTests: цели Harmony-патчей и имена reflection-цепочек).
     Проект меню ссылается на RoR2.dll только условно (свойство RoR2ManagedDir),
     поэтому тесты собираются с теми же свойствами, что и основная сборка:
       dotnet test tests/RoR2SandboxMenu.Tests.csproj \
         -p:RoR2ManagedDir=<...> -p:BepInExDir=<...>
     Тестируемые типы не трогают Unity/RoR2 при загрузке: кодек опирается на
     compile-time стаб HLAPI, который здесь используется как рантайм-сборка.
+    GameRefsTests читают метаданные RoR2.dll из папки GAME_REFS_DIR через
+    MetadataLoadContext; без переменной фикстур пропускается.
   -->
   <PropertyGroup>
     <TargetFramework>net8.0</TargetFramework>
@@ -20,12 +24,26 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
     <PackageReference Include="NUnit" Version="3.14.0" />
     <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+    <PackageReference Include="System.Reflection.MetadataLoadContext" Version="8.0.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="../plugin/RoR2SandboxMenu.csproj" />
     <ProjectReference Include="../plugin/stubs/HlapiStub.csproj" />
   </ItemGroup>
+
+  <!--
+    Ref-сборки UnityEngine нужны GameRefsTests как резолверу MetadataLoadContext:
+    иерархия типов игры упирается в MonoBehaviour из UnityEngine.CoreModule.
+    Копируем их из nuget-кэша рядом с тестами, в bin они штатно не попадают.
+  -->
+  <ItemGroup>
+    <UnityRefAssemblies Include="$(NuGetPackageRoot)unityengine.modules/2021.3.33/lib/**/*.dll" />
+  </ItemGroup>
+
+  <Target Name="CopyUnityRefAssemblies" AfterTargets="Build">
+    <Copy SourceFiles="@(UnityRefAssemblies)" DestinationFolder="$(OutDir)unityrefs" />
+  </Target>
 
 </Project>
 

@@ -7,3 +7,5 @@ stubs/obj/
 .idea/
 TestResults/
 
+game-managed/
+refs.zip
