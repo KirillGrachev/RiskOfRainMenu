@@ -92,25 +92,44 @@ namespace UnityEngine.Networking
 
     public class NetworkAnimator : NetworkBehaviour { }
 
+    // Compile-time стаб в игре не используется (Mono резолвит настоящую сборку),
+    // но функциональная реализация нужна unit-тестам кодека запросов.
     public class NetworkReader
     {
-        public NetworkReader() { }
-        public NetworkReader(byte[] buffer) { }
-        public byte ReadByte() { return 0; }
-        public bool ReadBoolean() { return false; }
-        public int ReadInt32() { return 0; }
-        public uint ReadUInt32() { return 0u; }
-        public string ReadString() { return ""; }
+        private readonly byte[] _b;
+        private int _p;
+        public NetworkReader() { _b = new byte[0]; }
+        public NetworkReader(byte[] buffer) { _b = buffer ?? new byte[0]; }
+        public byte ReadByte() { return _b[_p++]; }
+        public bool ReadBoolean() { return ReadByte() != 0; }
+        public int ReadInt32() { int v = System.BitConverter.ToInt32(_b, _p); _p += 4; return v; }
+        public uint ReadUInt32() { uint v = System.BitConverter.ToUInt32(_b, _p); _p += 4; return v; }
+        public string ReadString()
+        {
+            if (!ReadBoolean()) return null;
+            int n = ReadInt32();
+            string s = System.Text.Encoding.UTF8.GetString(_b, _p, n);
+            _p += n;
+            return s;
+        }
     }
 
     public class NetworkWriter
     {
-        public byte[] ToArray() { return null; }
-        public void Write(byte value) { }
-        public void Write(bool value) { }
-        public void Write(int value) { }
-        public void Write(uint value) { }
-        public void Write(string value) { }
+        private readonly System.IO.MemoryStream _ms = new System.IO.MemoryStream();
+        public byte[] ToArray() { return _ms.ToArray(); }
+        public void Write(byte value) { _ms.WriteByte(value); }
+        public void Write(bool value) { _ms.WriteByte((byte)(value ? 1 : 0)); }
+        public void Write(int value) { var b = System.BitConverter.GetBytes(value); _ms.Write(b, 0, 4); }
+        public void Write(uint value) { var b = System.BitConverter.GetBytes(value); _ms.Write(b, 0, 4); }
+        public void Write(string value)
+        {
+            if (value == null) { Write(false); return; }
+            Write(true);
+            var b = System.Text.Encoding.UTF8.GetBytes(value);
+            Write(b.Length);
+            _ms.Write(b, 0, b.Length);
+        }
     }
 
     public class MessageBase

@@ -33,6 +33,9 @@ namespace SandboxMenu
         private static bool _collapsed;
         private static int _tab;
         private static Vector2 _scroll;
+        private static bool _stateLoaded;
+        private static string _statusCache = "";
+        private static float _statusAt;
 
         private static readonly string[] TabsRu =
         {
@@ -50,8 +53,10 @@ namespace SandboxMenu
         /// <summary>Открыть/закрыть меню; при открытии освежает каталоги и язык.</summary>
         public static void Toggle()
         {
+            if (_visible) PersistState();
             _visible = !_visible;
             if (!_visible) return;
+            LoadState();
 
             var cfg = SandboxMenuPlugin.MenuLanguage;
             Texts.Russian = cfg == null ||
@@ -67,27 +72,60 @@ namespace SandboxMenu
         {
             if (!_visible) return;
             Theme.Ensure();
+            LoadState();
 
             // игра красит GUI.color под свой HUD - без сброса наше окно
             // рисуется полупрозрачным даже с непрозрачной текстурой фона
             var color = GUI.color;
             var bgColor = GUI.backgroundColor;
             var contentColor = GUI.contentColor;
+            var matrix = GUI.matrix;
             GUI.color = Color.white;
             GUI.backgroundColor = Color.white;
             GUI.contentColor = Color.white;
 
+            // HiDPI/4K: всё меню рисуется в виртуальных координатах под масштабом
+            float scale = Mathf.Clamp(SandboxMenuPlugin.MenuScale != null ? SandboxMenuPlugin.MenuScale.Value : 1f, 1f, 2f);
+            if (scale > 1.01f)
+            {
+                GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
+            }
+            float vw = Screen.width / scale;
+            float vh = Screen.height / scale;
+
             // окно не шире экрана и не расширяется под минимальную ширину вкладок
-            float width = Mathf.Min(BaseWidth, Mathf.Max(320f, Screen.width - 24f));
+            float width = Mathf.Min(BaseWidth, Mathf.Max(320f, vw - 24f));
             _rect.width = width;
-            _rect.x = Mathf.Clamp(_rect.x, 8f, Mathf.Max(8f, Screen.width - width - 8f));
-            _rect.y = Mathf.Clamp(_rect.y, 0f, Mathf.Max(0f, Screen.height - 28f));
+            _rect.x = Mathf.Clamp(_rect.x, 8f, Mathf.Max(8f, vw - width - 8f));
+            _rect.y = Mathf.Clamp(_rect.y, 0f, Mathf.Max(0f, vh - 28f));
 
             _rect = GUILayout.Window(WindowId, _rect, DrawWindow, "", Theme.Window);
 
             GUI.color = color;
             GUI.backgroundColor = bgColor;
             GUI.contentColor = contentColor;
+            GUI.matrix = matrix;
+        }
+
+        /// <summary>Восстановить позицию/вкладку/свёрнутость из конфига (один раз).</summary>
+        private static void LoadState()
+        {
+            if (_stateLoaded) return;
+            _stateLoaded = true;
+            _tab = Mathf.Clamp(SandboxMenuPlugin.MenuTab != null ? SandboxMenuPlugin.MenuTab.Value : 0, 0, 6);
+            _collapsed = SandboxMenuPlugin.MenuCollapsed != null && SandboxMenuPlugin.MenuCollapsed.Value;
+            _rect.x = SandboxMenuPlugin.MenuX != null ? SandboxMenuPlugin.MenuX.Value : 90;
+            _rect.y = SandboxMenuPlugin.MenuY != null ? SandboxMenuPlugin.MenuY.Value : 60;
+        }
+
+        /// <summary>Сохранить состояние окна в конфиг: переживает перезапуск игры.</summary>
+        public static void PersistState()
+        {
+            if (SandboxMenuPlugin.MenuTab != null) SandboxMenuPlugin.MenuTab.Value = _tab;
+            if (SandboxMenuPlugin.MenuCollapsed != null) SandboxMenuPlugin.MenuCollapsed.Value = _collapsed;
+            if (SandboxMenuPlugin.MenuX != null) SandboxMenuPlugin.MenuX.Value = Mathf.RoundToInt(_rect.x);
+            if (SandboxMenuPlugin.MenuY != null) SandboxMenuPlugin.MenuY.Value = Mathf.RoundToInt(_rect.y);
+            try { SandboxMenuPlugin.Self?.Config.Save(); } catch { /* best effort */ }
         }
 
         /// <summary>Содержимое окна: заголовок, вкладки, состояние, активная вкладка.</summary>
@@ -147,8 +185,26 @@ namespace SandboxMenu
             GUILayout.EndHorizontal();
         }
 
-        /// <summary>Одна строка состояния: забег, роль (сервер/клиент), цель.</summary>
+        /// <summary>Одна строка состояния: забег, роль (сервер/клиент), цель.
+        /// Строка интерполируется не чаще раза в 0.5 с - не аллоцируем в кадре.</summary>
         private static void DrawStatusBar()
+        {
+            if (Time.unscaledTime - _statusAt > 0.5f)
+            {
+                _statusAt = Time.unscaledTime;
+                _statusCache = BuildStatus();
+            }
+            GUILayout.Label(_statusCache, Theme.SmallRich, GUILayout.Height(16f));
+
+            if (!NetProtocol.IsServer && !NetProtocol.HostHasMod)
+            {
+                Widgets.Hint(Texts.T(
+                    "действия мира недоступны: мод нужен и хосту",
+                    "world actions unavailable: the host needs the mod too"));
+            }
+        }
+
+        private static string BuildStatus()
         {
             string run = GameApi.InRun
                 ? "<color=#7EE787>" + Texts.T("забег", "run") + "</color>"
@@ -170,17 +226,9 @@ namespace SandboxMenu
 
             var body = PlayerTargets.Body;
             string who = body != null ? body.name : "-";
-            GUILayout.Label(Texts.T(
+            return Texts.T(
                 $"[ {run} ]  [ {role} ]  <color=#9FB2CC>цель:</color> <color=#E8EEF7>{who}</color>",
-                $"[ {run} ]  [ {role} ]  <color=#9FB2CC>target:</color> <color=#E8EEF7>{who}</color>"),
-                Theme.SmallRich, GUILayout.Height(16f));
-
-            if (!NetProtocol.IsServer && !NetProtocol.HostHasMod)
-            {
-                Widgets.Hint(Texts.T(
-                    "действия мира недоступны: мод нужен и хосту",
-                    "world actions unavailable: the host needs the mod too"));
-            }
+                $"[ {run} ]  [ {role} ]  <color=#9FB2CC>target:</color> <color=#E8EEF7>{who}</color>");
         }
 
         /// <summary>Выбор игрока-цели в кооперативе; в соло цель одна и строка тихая.</summary>

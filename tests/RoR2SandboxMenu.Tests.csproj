@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Unit-тесты чистой логики протокола (кодек запросов, клампы, rate-limit).
+    Проект меню ссылается на RoR2.dll только условно (свойство RoR2ManagedDir),
+    поэтому тесты собираются с теми же свойствами, что и основная сборка:
+      dotnet test tests/RoR2SandboxMenu.Tests.csproj \
+        -p:RoR2ManagedDir=<...> -p:BepInExDir=<...>
+    Тестируемые типы не трогают Unity/RoR2 при загрузке: кодек опирается на
+    compile-time стаб HLAPI, который здесь используется как рантайм-сборка.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <LangVersion>9</LangVersion>
+    <IsPackable>false</IsPackable>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.8.0" />
+    <PackageReference Include="NUnit" Version="3.14.0" />
+    <PackageReference Include="NUnit3TestAdapter" Version="4.5.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../plugin/RoR2SandboxMenu.csproj" />
+    <ProjectReference Include="../plugin/stubs/HlapiStub.csproj" />
+  </ItemGroup>
+
+</Project>

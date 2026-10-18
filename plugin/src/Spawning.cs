@@ -68,8 +68,12 @@ namespace SandboxMenu
                 {
                     // Perform() сам пишет LogError, если prefab null или вызов
                     // упёрся в TeamDef.softCharacterLimit (его снимает
-                    // ignoreTeamMemberLimit = true)
-                    GameApi.Info($"MasterSummon.Perform returned null for {masterPrefab.name}");
+                    // ignoreTeamMemberLimit = true); причину дублируем в LastError,
+                    // чтобы UI и чат показывали её, а не общее «не удался»
+                    LastError = Texts.T(
+                        $"MasterSummon.Perform вернул null для {masterPrefab.name}",
+                        $"MasterSummon.Perform returned null for {masterPrefab.name}");
+                    GameApi.Info(LastError);
                 }
                 return master;
             }
@@ -143,7 +147,7 @@ namespace SandboxMenu
             if (_stackReaderResolved) return _stackReader;
             _stackReaderResolved = true;
             var t = typeof(Inventory);
-            foreach (var name in new[] { "GetItemStack", "CalculateEffectiveItemStacks" })
+            foreach (var name in new[] { "GetItemCountTotal", "GetItemStack", "CalculateEffectiveItemStacks" })
             {
                 var mi = t.GetMethod(name, new[] { typeof(ItemIndex) });
                 if (mi != null && mi.ReturnType == typeof(int)) { _stackReader = mi; break; }
@@ -433,20 +437,34 @@ namespace SandboxMenu
             catch (Exception e) { GameApi.Warn("NetDestroy", e); }
         }
 
-        /// <summary>Вызывается из Plugin.Update раз в 0.5 с: добить выживших.</summary>
+        /// <summary>
+        /// Вызывается из Plugin.Update раз в 0.5 с: добить выживших. За один
+        /// проход в лог уходит не больше пяти персональных предупреждений,
+        /// остальное сводится в одну строку - массовый отказ не спамит.
+        /// </summary>
         public static void SweepKillQueue()
         {
             if (_killQueue.Count == 0) return;
+            int warned = 0, total = 0;
             for (int i = _killQueue.Count - 1; i >= 0; i--)
             {
                 var go = _killQueue[i];
                 _killQueue.RemoveAt(i);
                 if (go == null) continue;
-
-                GameApi.Warn("KillQueue",
-                    new InvalidOperationException("object survived destroy: " + go.name));
+                total++;
+                if (warned < 5)
+                {
+                    warned++;
+                    GameApi.Warn("KillQueue",
+                        new InvalidOperationException("object survived destroy: " + go.name));
+                }
                 DestroyNow(go);
                 UnityEngine.Object.Destroy(go);
+            }
+            if (total > 5)
+            {
+                GameApi.Warn("KillQueue",
+                    new InvalidOperationException($"and {total - 5} more objects survived destroy"));
             }
         }
 

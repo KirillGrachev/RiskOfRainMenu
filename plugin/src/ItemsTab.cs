@@ -21,18 +21,16 @@ namespace SandboxMenu
                            Texts.T("ItemCatalog: выдать, снять или сбросить стопку цели",
                                    "ItemCatalog: give, remove or drop stacks to the target"));
 
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 _hideHidden = GUILayout.Toggle(_hideHidden,
                     Texts.T("скрыть служебные", "hide hidden"), GUILayout.Height(Widgets.RowHeight));
                 GUILayout.FlexibleSpace();
                 GUILayout.Label(Texts.T("стопка", "stack"), Theme.Name,
                                 GUILayout.Width(44f), GUILayout.Height(Widgets.RowHeight));
                 _count = Widgets.SliderInline(_count, 1, 50, 130f);
-            });
+            GUILayout.EndHorizontal();
 
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 bool armed = Time.unscaledTime < _clearArmUntil;
                 string label = armed
                     ? Texts.T("ТОЧНО очистить?", "SURE to clear?")
@@ -43,7 +41,7 @@ namespace SandboxMenu
                     if (!armed) _clearArmUntil = Time.unscaledTime + 4f;
                     else { _clearArmUntil = 0f; SandboxActions.ClearItems(); }
                 }
-            });
+            GUILayout.EndHorizontal();
 
             if (!GameApi.InRun)
             {
@@ -60,8 +58,7 @@ namespace SandboxMenu
                 if (shown >= MenuUI.MaxRows) { shown++; continue; }
                 shown++;
 
-                Widgets.Row(() =>
-                {
+                GUILayout.BeginHorizontal();
                     if (Widgets.Button(Texts.T("Выдать", "Give"), 62f,
                                        Texts.T("добавить стопку цели", "add stacks to the target")))
                     {
@@ -78,7 +75,7 @@ namespace SandboxMenu
                         SandboxActions.DropPickup(it.Pickup, _count);
                     }
                     GUILayout.Label(new GUIContent(it.Name, it.Name + "  [" + it.Index + "]"), Theme.Name);
-                });
+                GUILayout.EndHorizontal();
             }
             Widgets.Footer(System.Math.Min(shown, MenuUI.MaxRows), Catalogs.Items.Count);
         }

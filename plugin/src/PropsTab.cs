@@ -17,8 +17,7 @@ namespace SandboxMenu
                            Texts.T("то, что может заспавнить текущая сцена",
                                    "whatever the current stage can spawn"));
 
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 if (Widgets.Button(Texts.T("Обновить список", "Refresh list"), 170f,
                                    Texts.T("перечитать карты спавна сцены",
                                            "re-read the stage spawn cards")))
@@ -35,7 +34,7 @@ namespace SandboxMenu
                 GUILayout.Label(Texts.T($"заспавнено: {SpawnRegistry.PropCount}",
                                         $"spawned: {SpawnRegistry.PropCount}"),
                                 Theme.Small, GUILayout.Height(Widgets.RowHeight));
-            });
+            GUILayout.EndHorizontal();
 
             _search = Widgets.SearchBox(_search);
 
@@ -46,8 +45,7 @@ namespace SandboxMenu
                 if (shown >= MenuUI.MaxRows) { shown++; continue; }
                 shown++;
 
-                Widgets.Row(() =>
-                {
+                GUILayout.BeginHorizontal();
                     if (Widgets.Button(Texts.T("Спавн", "Spawn"), 62f,
                                        Texts.T("один объект у цели", "one prop at the target")))
                     {
@@ -58,7 +56,7 @@ namespace SandboxMenu
                         SandboxActions.SpawnProp(it.Card, it.Name, 3);
                     }
                     GUILayout.Label(new GUIContent(it.Name, it.Name), Theme.Name);
-                });
+                GUILayout.EndHorizontal();
             }
             Widgets.Footer(System.Math.Min(shown, MenuUI.MaxRows), Catalogs.Interactables.Count);
         }

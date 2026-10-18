@@ -43,15 +43,14 @@ namespace SandboxMenu
             foreach (var w in warns) GUILayout.Label("  " + w, Theme.Small, GUILayout.Height(14f));
 
             GUILayout.Space(4f);
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 if (Widgets.Button(Texts.T("Убрать модели-призраки", "Remove ghost models"), 210f,
                                    Texts.T("доубить тела без master'а: наследие старых удалений",
                                            "finish off bodies without a master: leftovers of old removes")))
                 {
                     SandboxActions.CleanupOrphans();
                 }
-            });
+            GUILayout.EndHorizontal();
 
             GUILayout.Space(4f);
             if (Widgets.Button(Texts.T("Пересобрать каталоги", "Rebuild catalogs"), 190f,

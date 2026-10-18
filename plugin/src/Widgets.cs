@@ -16,6 +16,10 @@ namespace SandboxMenu
         public const float HeaderHeight = 22f;
         public const float LabelColumn = 62f;
 
+        /// <summary>Имя фокусируемого контрола поиска: пока он в фокусе,
+        /// клавиша меню не сворачивает окно (Plugin.Update проверяет фокус).</summary>
+        public const string SearchControlName = "sbx_search";
+
         /// Цветная шина-заголовок раздела (как в штатных панелях игры).
         public static void Header(string text, GUIStyle style, string tooltip = null)
         {
@@ -66,6 +70,7 @@ namespace SandboxMenu
             GUILayout.BeginHorizontal();
             GUILayout.Label(Texts.T("Поиск", "Search"), Theme.Name,
                             GUILayout.Width(LabelColumn), GUILayout.Height(RowHeight));
+            GUI.SetNextControlName(SearchControlName);
             string next = GUILayout.TextField(current ?? "", Theme.Field, GUILayout.Height(RowHeight));
             if (Button("x", 24f, Texts.T("сбросить поиск", "clear search"))) next = "";
             GUILayout.EndHorizontal();

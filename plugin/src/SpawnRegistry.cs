@@ -224,6 +224,9 @@ namespace SandboxMenu
         /// <summary>Добавить master'а и всю его свиту (транзитивно) в список.</summary>
         private static void CollectWithMinions(CharacterMaster owner, List<CharacterMaster> into)
         {
+            // один сняпок сцены на весь обход: instance-список игры не аллоцирует
+            // новый массив каждый проход, в отличие от FindObjectsOfType
+            var all = new List<CharacterMaster>(CharacterMaster.readOnlyInstancesList);
             var frontier = new List<CharacterMaster> { owner };
             while (frontier.Count > 0)
             {
@@ -232,7 +235,7 @@ namespace SandboxMenu
                 {
                     if (o == null || into.Contains(o)) continue;
                     into.Add(o);
-                    foreach (var m in UnityEngine.Object.FindObjectsOfType<CharacterMaster>())
+                    foreach (var m in all)
                     {
                         if (m == null || into.Contains(m) || next.Contains(m)) continue;
                         var mo = m.minionOwnership;
@@ -254,7 +257,7 @@ namespace SandboxMenu
             int removed = 0;
             try
             {
-                foreach (var body in UnityEngine.Object.FindObjectsOfType<CharacterBody>())
+                foreach (var body in CharacterBody.readOnlyInstancesList)
                 {
                     if (body == null || body.teamComponent == null) continue;
                     if (body.teamComponent.teamIndex != TeamIndex.Player) continue;

@@ -12,6 +12,8 @@ namespace SandboxMenu
     internal static class CloneTab
     {
         private static float _slider = -1f;
+        private static string _statusCache = "";
+        private static float _statusAt;
 
         /// <summary>Отрисовка вкладки; вызывается оболочкой окна.</summary>
         public static void Draw()
@@ -67,8 +69,7 @@ namespace SandboxMenu
             }
 
             GUILayout.Space(4f);
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 if (Widgets.Button("+1", 44f, Texts.T("клон сразу", "spawn one now")))
                 {
                     SandboxActions.CloneSpawnNow(1); Sync(target);
@@ -89,12 +90,17 @@ namespace SandboxMenu
                 {
                     SandboxActions.CloneClearAll(); _slider = 0f;
                 }
-            });
+            GUILayout.EndHorizontal();
 
             GUILayout.Space(2f);
-            Widgets.Hint(Texts.T(
-                $"в строю {CloneManager.AliveFor(target)} / нужно {CloneManager.DesiredFor(target)}   всего {CloneManager.AliveTotal}",
-                $"alive {CloneManager.AliveFor(target)} / desired {CloneManager.DesiredFor(target)}   total {CloneManager.AliveTotal}"));
+            if (Time.unscaledTime - _statusAt > 0.5f)
+            {
+                _statusAt = Time.unscaledTime;
+                _statusCache = Texts.T(
+                    $"в строю {CloneManager.AliveFor(target)} / нужно {CloneManager.DesiredFor(target)}   всего {CloneManager.AliveTotal}",
+                    $"alive {CloneManager.AliveFor(target)} / desired {CloneManager.DesiredFor(target)}   total {CloneManager.AliveTotal}");
+            }
+            Widgets.Hint(_statusCache);
 
             if (CloneManager.LastError.Length > 0) Widgets.Hint(CloneManager.LastError);
         }

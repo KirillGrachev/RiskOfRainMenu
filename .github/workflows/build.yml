@@ -76,16 +76,31 @@ jobs:
           dotnet-version: '8.0.x'
 
       - name: Build (compile-time API check against the game build)
+        env:
+          PLUGIN_VERSION: ${{ startsWith(github.ref, 'refs/tags/v') && substring(github.ref, 11) || '' }}
         run: |
-          dotnet build plugin/RoR2SandboxMenu.csproj -c Release -nologo \
+          VER_ARG=""
+          if [ -n "$PLUGIN_VERSION" ]; then VER_ARG="-p:PluginVersion=$PLUGIN_VERSION"; fi
+          dotnet build plugin/RoR2SandboxMenu.csproj -c Release -nologo $VER_ARG \
             -p:RoR2ManagedDir="$GITHUB_WORKSPACE/game-managed" \
             -p:BepInExDir="$GITHUB_WORKSPACE/game-managed/bepinex"
 
-      - name: Collect the dll
+      - name: Unit tests (protocol codec, clamps, rate limit)
+        run: |
+          dotnet test tests/RoR2SandboxMenu.Tests.csproj -c Release -nologo \
+            -p:RoR2ManagedDir="$GITHUB_WORKSPACE/game-managed" \
+            -p:BepInExDir="$GITHUB_WORKSPACE/game-managed/bepinex"
+
+      - name: Verify the built dll against the game assembly
         run: |
           mkdir -p dist
-          find plugin/bin -name 'RoR2SandboxMenu.dll' -print -quit \
+          find plugin/bin -name 'RoR2SandboxMenu.dll' -path '*Release*' -print -quit \
             | xargs -I{} cp {} dist/RoR2SandboxMenu.dll
+          python -m pip install --upgrade pip pefile
+          python tools/verify_plugin.py dist/RoR2SandboxMenu.dll --dll game-managed/RoR2.dll
+
+      - name: Collect the dll
+        run: |
           ls -la dist
           sha256sum dist/RoR2SandboxMenu.dll
 

@@ -29,22 +29,20 @@ namespace SandboxMenu
                            Texts.T("MasterCatalog: выжившие, монстры, дроны, боссы",
                                    "MasterCatalog: survivors, monsters, drones, bosses"));
 
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 GUILayout.Label(Texts.T("Команда", "Team"), Theme.Name,
                                 GUILayout.Width(Widgets.LabelColumn), GUILayout.Height(22f));
                 var names = Texts.Russian ? TeamsRu : TeamsEn;
                 int t = GUILayout.SelectionGrid(_teamIndex, names, 5, Theme.Button, GUILayout.Height(22f));
                 if (t != _teamIndex) _teamIndex = t;
-            });
+            GUILayout.EndHorizontal();
 
             _count = Widgets.Slider(Texts.T("Кол-во", "How many"), _count, 1, 20);
             _allyOnly = Widgets.Toggle(_allyOnly, Texts.T("только союзные", "ally-like only"),
                                        Texts.T("дроны, турели, жуки - фильтр по имени префаба",
                                                "drones, turrets, beetles - prefab name filter"));
 
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 if (Widgets.Button(Texts.T("Убрать призванных", "Remove spawned"), 170f,
                                    Texts.T("зеркало спавна: уничтожить призванных меню",
                                            "mirror of spawn: kill everything the menu summoned")))
@@ -54,7 +52,7 @@ namespace SandboxMenu
                 GUILayout.Label(Texts.T($"призванных: {SpawnRegistry.MasterCount}",
                                         $"spawned: {SpawnRegistry.MasterCount}"),
                                 Theme.Small, GUILayout.Height(Widgets.RowHeight));
-            });
+            GUILayout.EndHorizontal();
 
             _search = Widgets.SearchBox(_search);
 
@@ -67,15 +65,14 @@ namespace SandboxMenu
                 if (shown >= MenuUI.MaxRows) { shown++; continue; }
                 shown++;
 
-                Widgets.Row(() =>
-                {
+                GUILayout.BeginHorizontal();
                     if (Widgets.Button(Texts.T("Спавн", "Spawn"), 62f,
                                        Texts.T("призвать рядом с целью", "summon near the target")))
                     {
                         SandboxActions.SpawnMaster(m.Prefab, m.Name, team, _count);
                     }
                     GUILayout.Label(new GUIContent(m.Name, m.Name), Theme.Name);
-                });
+                GUILayout.EndHorizontal();
             }
             Widgets.Footer(System.Math.Min(shown, MenuUI.MaxRows), Catalogs.Masters.Count);
         }

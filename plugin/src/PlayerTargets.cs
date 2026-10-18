@@ -30,6 +30,12 @@ namespace SandboxMenu
         private static readonly List<NetworkUser> _users = new List<NetworkUser>();
         private static int _selected;
 
+        // кэш имён: GetNetworkPlayerName аллоцирует, а DisplayName дёргается
+        // селектором цели каждый кадр - снимаем не чаще раза в 2 секунды
+        private static readonly Dictionary<NetworkUser, string> _nameCache =
+            new Dictionary<NetworkUser, string>();
+        private static float _nameCacheAt;
+
         public static int Count { get { return _users.Count; } }
 
         public static IReadOnlyList<NetworkUser> Users { get { return _users; } }
@@ -77,6 +83,8 @@ namespace SandboxMenu
         public static string DisplayName(NetworkUser nu)
         {
             if (nu == null) return Texts.T("(нет)", "(none)");
+            string cached;
+            if (_nameCache.TryGetValue(nu, out cached)) return cached;
             int idx = _users.IndexOf(nu);
             string name = null;
             try
@@ -95,7 +103,14 @@ namespace SandboxMenu
 
             var local = GameApi.GetLocalUser();
             bool isLocal = local != null && ReferenceEquals(nu, local.currentNetworkUser);
-            return isLocal ? name + Texts.T(" (ты)", " (you)") : name;
+            string result = isLocal ? name + Texts.T(" (ты)", " (you)") : name;
+            if (Time.unscaledTime - _nameCacheAt > 2f)
+            {
+                _nameCacheAt = Time.unscaledTime;
+                _nameCache.Clear();
+            }
+            _nameCache[nu] = result;
+            return result;
         }
 
         public static string[] DisplayNames()

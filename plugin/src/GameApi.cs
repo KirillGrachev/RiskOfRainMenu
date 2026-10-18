@@ -51,7 +51,8 @@ namespace SandboxMenu
         /// Одинаковые ошибки не должны засыпать лог и вкладку Info.
         public static void WarnOnce(string where, Exception e)
         {
-            var key = where + "|" + e.GetType().Name;
+            // ключ включает сообщение: разные причины одного типа не схлопываются
+            var key = where + "|" + e.GetType().Name + "|" + (e.Message ?? "").GetHashCode();
             if (_warnedOnce.Add(key)) Warn(where, e);
         }
 

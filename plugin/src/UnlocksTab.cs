@@ -12,6 +12,8 @@ namespace SandboxMenu
     internal static class UnlocksTab
     {
         private static float _grantArmUntil;
+        private static string _countsCache = "";
+        private static float _countsAt;
 
         /// <summary>Отрисовка вкладки; вызывается оболочкой окна.</summary>
         public static void Draw()
@@ -33,9 +35,14 @@ namespace SandboxMenu
                 Texts.T("всё просмотрено", "all viewables seen"),
                 Texts.T("убирает метки «new» в меню игры", "removes 'new' markers in game menus"));
 
-            Widgets.Hint(Texts.T(
-                $"unlockable: {UnlockPatches.UnlockableCount}   скинов: {UnlockPatches.SkinCount}",
-                $"unlockables: {UnlockPatches.UnlockableCount}   skins: {UnlockPatches.SkinCount}"));
+            if (Time.unscaledTime - _countsAt > 1f)
+            {
+                _countsAt = Time.unscaledTime;
+                _countsCache = Texts.T(
+                    $"разблокировок: {UnlockPatches.UnlockableCount}   скинов: {UnlockPatches.SkinCount}",
+                    $"unlockables: {UnlockPatches.UnlockableCount}   skins: {UnlockPatches.SkinCount}");
+            }
+            Widgets.Hint(_countsCache);
 
             Widgets.Header(Texts.T("ПРОФИЛЬ", "PROFILE"), Theme.HeaderRed,
                            Texts.T("запись в файл сейва; обратима через откат",
@@ -53,8 +60,7 @@ namespace SandboxMenu
                 else { _grantArmUntil = 0f; UnlockPatches.GrantAllToProfile(); }
             }
 
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 if (Widgets.Button(Texts.T("Откат к бэкапу", "Restore backup"), 160f,
                                    Texts.T("вернуть профиль из последнего бэкапа, без перезапуска",
                                            "restore the profile from the latest backup, live")))
@@ -64,7 +70,7 @@ namespace SandboxMenu
                 GUILayout.Label(Texts.T($"бэкапов: {UnlockPatches.Backups().Count}",
                                         $"backups: {UnlockPatches.Backups().Count}"),
                                 Theme.Small, GUILayout.Height(Widgets.RowHeight));
-            });
+            GUILayout.EndHorizontal();
         }
     }
 }

@@ -1,0 +1,8 @@
+bin/
+obj/
+stubs/bin/
+stubs/obj/
+*.user
+.vs/
+.idea/
+TestResults/

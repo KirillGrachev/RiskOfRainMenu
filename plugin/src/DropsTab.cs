@@ -22,8 +22,7 @@ namespace SandboxMenu
 
             // три ветви зеркала: по умолчанию - лишний дроп рядом с целью,
             // затем только выброшенный меню, затем весь дроп мира
-            Widgets.Row(() =>
-            {
+            GUILayout.BeginHorizontal();
                 if (Widgets.Button(Texts.T("Убрать дроп рядом", "Clear drops nearby"), 170f,
                                    Texts.T("по умолчанию: капли и пикапы в радиусе 15 м от цели",
                                            "default: droplets and pickups within 15 m of the target")))
@@ -42,7 +41,7 @@ namespace SandboxMenu
                 {
                     SandboxActions.ClearDrops();
                 }
-            });
+            GUILayout.EndHorizontal();
 
             if (!GameApi.InRun)
             {
@@ -58,15 +57,14 @@ namespace SandboxMenu
                 if (shown >= MenuUI.MaxRows) { shown++; continue; }
                 shown++;
 
-                Widgets.Row(() =>
-                {
+                GUILayout.BeginHorizontal();
                     if (Widgets.Button(Texts.T("Дроп", "Drop"), 62f,
                                        Texts.T("выбросить у цели", "throw at the target")))
                     {
                         SandboxActions.DropPickup(p.Index, _count);
                     }
                     GUILayout.Label(new GUIContent(p.Name, p.Name), Theme.Name);
-                });
+                GUILayout.EndHorizontal();
             }
             Widgets.Footer(System.Math.Min(shown, MenuUI.MaxRows), Catalogs.Pickups.Count);
         }

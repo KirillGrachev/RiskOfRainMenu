@@ -7,38 +7,20 @@ using UnityEngine.Networking;
 namespace SandboxMenu
 {
     /// <summary>
-    /// Коды действий сетевого запроса (байт, стабильны между версиями плагина).
-    /// </summary>
-    internal static class ActionCode
-    {
-        public const byte GiveItem = 1;
-        public const byte RemoveItem = 2;
-        public const byte ClearItems = 3;
-        public const byte DropPickup = 4;
-        public const byte ClearDrops = 5;
-        public const byte SpawnMaster = 6;
-        public const byte RemoveSpawnedMasters = 7;
-        public const byte SpawnProp = 8;
-        public const byte RemoveSpawnedProps = 9;
-        public const byte CloneSetDesired = 10;
-        public const byte CloneSpawnNow = 11;
-        public const byte CloneClearTarget = 12;
-        public const byte CloneClearAll = 13;
-        public const byte CloneSetFlags = 14;
-        public const byte CloneSetKeepAlive = 15;
-        public const byte CleanupOrphans = 16;
-        public const byte ClearDropsNear = 17;
-        public const byte ClearMenuDrops = 18;
-    }
-
-    /// <summary>
     /// Запрос клиента на изменение мира. Одна MessageBase на все действия:
-    /// код действия + цель (netId, 0 = «сам отправитель») + до двух чисел +
-    /// команда + имя префаба/карты. Сервер разрешает отправителя по соединению,
-    /// поэтому клиент не может представиться чужим именем соединения.
+    /// версия протокола, код действия, цель (netId, 0 = «сам отправитель»),
+    /// до двух чисел, команда и имя префаба/карты.
+    ///
+    /// Сервер разрешает отправителя по соединению (клиент не может представиться
+    /// чужим именем соединения), проверяет версию протокола, клампует счётчики
+    /// (<see cref="Protocol.ClampCount"/>), режет rate-limit'ом
+    /// (<see cref="RateLimiter"/>) и по настройке прав может ограничить цель
+    /// самим отправителем. Результат исполнения возвращается ack'ом отправителю,
+    /// поэтому клиент отличает «сервер исполнил» от «запрос потерялся».
     /// </summary>
     internal class SandboxRequest : MessageBase
     {
+        public byte Version;
         public byte Action;
         public uint TargetNetId;
         public int P1;
@@ -48,23 +30,47 @@ namespace SandboxMenu
 
         public override void Serialize(NetworkWriter writer)
         {
+            writer.Write(Protocol.ProtoVersion);
             writer.Write(Action);
             writer.Write(TargetNetId);
             writer.Write(P1);
             writer.Write(P2);
             writer.Write(Team);
             writer.Write(Name != null);
-            if (Name != null) writer.Write(Name);
+            if (Name != null) writer.Write(Protocol.ClampName(Name));
         }
 
         public override void Deserialize(NetworkReader reader)
         {
+            Version = reader.ReadByte();
             Action = reader.ReadByte();
             TargetNetId = reader.ReadUInt32();
             P1 = reader.ReadInt32();
             P2 = reader.ReadInt32();
             Team = reader.ReadByte();
             Name = reader.ReadBoolean() ? reader.ReadString() : null;
+        }
+    }
+
+    /// <summary>
+    /// Подтверждение сервера: запрос исполнен или отклонён (версия, rate-limit,
+    /// права). Позволяет клиенту не гадать по чат-сообщениям, дошёл ли запрос.
+    /// </summary>
+    internal class SandboxAck : MessageBase
+    {
+        public byte Action;
+        public byte Ok;
+
+        public override void Serialize(NetworkWriter writer)
+        {
+            writer.Write(Action);
+            writer.Write(Ok);
+        }
+
+        public override void Deserialize(NetworkReader reader)
+        {
+            Action = reader.ReadByte();
+            Ok = reader.ReadByte();
         }
     }
 
@@ -77,31 +83,36 @@ namespace SandboxMenu
     /// Клиент-серверный канал меню.
     ///
     /// Зачем: мир меняет только сервер, но меню открыто может быть у любого
-    /// игрока. Без этого канала кнопки клиента молча ничего не делали («не
-    /// работает, когда я не хост»). Теперь действие клиента уезжает запросом на
-    /// сервер, где исполняется тем же кодом, что и локальное нажатие, а цель
-    /// разрешается из самого запроса.
+    /// игрока. Действие клиента уезжает запросом на сервер и исполняется там
+    /// тем же кодом, что и локальное нажатие (<see cref="SandboxActions"/>).
     ///
     /// Транспорт - штатный HLAPI игры: клиент берётся из
-    /// NetworkManagerSystem.singleton.client (публичное свойство базового
-    /// NetworkManager), обработчики регистрируются стандартными
-    /// RegisterHandler; номера сообщений выбраны вне диапазона игры (31337+).
-    /// Если хост без мода, запросы просто не обрабатываются, а ping не получает
-    /// pong - меню честно пишет «хост без мода» вместо молчания.
+    /// NetworkManagerSystem.singleton.client, обработчики регистрируются по
+    /// событиям onStartServerGlobal/onStartClientGlobal (а не поллингом),
+    /// номера сообщений выводятся из настройки General.MessageBaseId
+    /// (по умолчанию 31337..31340 - вне диапазона игры; при коллизии с другим
+    /// модом базовый номер меняется конфигом без пересборки).
+    ///
+    /// Если хост без мода, запросы не обрабатываются, а ping не получает pong -
+    /// меню честно пишет «хост без мода» вместо молчания.
     /// </summary>
     internal static class NetProtocol
     {
-        public const short MsgRequest = 31337;
-        public const short MsgPing = 31338;
-        public const short MsgPong = 31339;
-
-        /// Канал 0 в HLAPI - reliable sequenced, порядок и доставка гарантированы.
+        /// <summary>Канал 0 в HLAPI - reliable sequenced: порядок и доставка.</summary>
         private const int Channel = 0;
+
+        private static short _base = 31337;
+        private static short MsgRequest { get { return _base; } }
+        private static short MsgPing { get { return (short)(_base + 1); } }
+        private static short MsgPong { get { return (short)(_base + 2); } }
+        private static short MsgAck { get { return (short)(_base + 3); } }
 
         private static bool _serverRegistered;
         private static bool _clientRegistered;
         private static float _pongAt = -1f;
         private static float _pingAt = -1f;
+        private static readonly RateLimiter _limiter = new RateLimiter();
+        private static bool _eventsSubscribed;
 
         /// <summary>Есть ли мод на стороне сервера (получен pong на ping).</summary>
         public static bool HostHasMod { get; private set; }
@@ -110,48 +121,86 @@ namespace SandboxMenu
         public static bool IsServer { get { return NetworkServer.active; } }
 
         /// <summary>
-        /// Вызывается из Plugin.Update: регистрирует обработчики, когда
-        /// появляется сервер или клиент, и следит за актуальностью ping/pong.
+        /// Подписка на сетевые события игры один раз; вызывается из Plugin.Awake.
+        /// Регистрация обработчиков дальше происходит по событиям, а не поллингом.
+        /// </summary>
+        public static void SubscribeEvents()
+        {
+            if (_eventsSubscribed) return;
+            _eventsSubscribed = true;
+            try
+            {
+                NetworkManagerSystem.onStartServerGlobal += OnServerStart;
+                NetworkManagerSystem.onStartClientGlobal += OnClientStart;
+                NetworkManagerSystem.onStopClientGlobal += OnClientStop;
+            }
+            catch (Exception e) { GameApi.WarnOnce("NetProtocol.SubscribeEvents", e); }
+        }
+
+        private static void OnServerStart()
+        {
+            try
+            {
+                ReadBaseId();
+                NetworkServer.RegisterHandler(MsgRequest, OnRequest);
+                NetworkServer.RegisterHandler(MsgPing, OnPing);
+                _serverRegistered = true;
+                HostHasMod = true;
+                _limiter.Reset();
+                GameApi.Info($"sandbox network: server handlers on msg {MsgRequest}..{MsgAck}");
+            }
+            catch (Exception e) { GameApi.Warn("OnServerStart", e); }
+        }
+
+        private static void OnClientStart(NetworkClient client)
+        {
+            try
+            {
+                if (client == null) return;
+                ReadBaseId();
+                client.RegisterHandler(MsgPong, OnPong);
+                client.RegisterHandler(MsgAck, OnAck);
+                _clientRegistered = true;
+                GameApi.Info("sandbox network: client handlers registered");
+            }
+            catch (Exception e) { GameApi.Warn("OnClientStart", e); }
+        }
+
+        private static void OnClientStop()
+        {
+            _clientRegistered = false;
+            HostHasMod = false;
+            _pongAt = -1f;
+            _pingAt = -1f;
+        }
+
+        /// <summary>Базовый номер сообщений из конфига (защита от коллизий с модами).</summary>
+        private static void ReadBaseId()
+        {
+            var cfg = SandboxMenuPlugin.MessageBaseId;
+            int v = cfg != null ? cfg.Value : 31337;
+            if (v < 1000 || v > 32760) v = 31337;
+            _base = (short)v;
+        }
+
+        /// <summary>
+        /// Вызывается из Plugin.Update: держит ping/pong-диагностику и сбрасывает
+        /// флаги регистрации, если сервер/клиент реально исчезли.
         /// </summary>
         public static void Tick()
         {
             try
             {
-                if (NetworkServer.active)
+                if (!NetworkServer.active && _serverRegistered)
                 {
-                    if (!_serverRegistered)
-                    {
-                        NetworkServer.RegisterHandler(MsgRequest, OnRequest);
-                        NetworkServer.RegisterHandler(MsgPing, OnPing);
-                        _serverRegistered = true;
-                        HostHasMod = true;
-                        GameApi.Info("sandbox network: server handlers registered");
-                    }
-                }
-                else if (_serverRegistered)
-                {
+                    TryUnregisterServer();
                     _serverRegistered = false;
                 }
 
-                var client = CurrentClient();
-                if (client != null)
-                {
-                    if (!_clientRegistered)
-                    {
-                        client.RegisterHandler(MsgPong, OnPong);
-                        _clientRegistered = true;
-                        GameApi.Info("sandbox network: client handlers registered");
-                    }
-                }
-                else if (_clientRegistered)
-                {
-                    _clientRegistered = false;
-                    HostHasMod = false;
-                    _pongAt = -1f;
-                    _pingAt = -1f;
-                }
+                var nm = NetworkManagerSystem.singleton;
+                bool clientAlive = nm != null && nm.client != null && nm.client.active;
+                if (!clientAlive && _clientRegistered) OnClientStop();
 
-                // pong старше четырёх секунд или вовсе не пришёл - хост без мода
                 if (_clientRegistered && !_serverRegistered)
                 {
                     float now = Time.unscaledTime;
@@ -166,6 +215,44 @@ namespace SandboxMenu
             catch (Exception e)
             {
                 GameApi.WarnOnce("NetProtocol.Tick", e);
+            }
+        }
+
+        private static void TryUnregisterServer()
+        {
+            try { NetworkServer.UnregisterHandler(MsgRequest); } catch { }
+            try { NetworkServer.UnregisterHandler(MsgPing); } catch { }
+        }
+
+        /// <summary>Спросить хоста, есть ли у него мод (вызывается при открытии меню).</summary>
+        public static void PingHost()
+        {
+            if (_serverRegistered) { HostHasMod = true; return; }
+            var client = CurrentClient();
+            if (client == null) return;
+            try
+            {
+                client.SendByChannel(MsgPing, new SandboxPing(), Channel);
+                _pingAt = Time.unscaledTime;
+            }
+            catch (Exception e) { GameApi.WarnOnce("ping", e); }
+        }
+
+        /// <summary>Отправить запрос действия на сервер. false - нечем отправить.</summary>
+        public static bool Send(SandboxRequest req)
+        {
+            req.Version = Protocol.ProtoVersion;
+            req.Name = Protocol.ClampName(req.Name);
+            var client = CurrentClient();
+            if (client == null) return false;
+            try
+            {
+                return client.SendByChannel(MsgRequest, req, Channel);
+            }
+            catch (Exception e)
+            {
+                GameApi.WarnOnce("send request", e);
+                return false;
             }
         }
 
@@ -187,54 +274,72 @@ namespace SandboxMenu
             }
         }
 
-        /// <summary>Спросить хоста, есть ли у него мод (вызывается при открытии меню).</summary>
-        public static void PingHost()
-        {
-            if (_serverRegistered) { HostHasMod = true; return; }
-            var client = CurrentClient();
-            if (client == null) return;
-            try
-            {
-                client.SendByChannel(MsgPing, new SandboxPing(), Channel);
-                _pingAt = Time.unscaledTime;
-            }
-            catch (Exception e) { GameApi.WarnOnce("ping", e); }
-        }
-
-        /// <summary>Отправить запрос действия на сервер. false - нечем отправить.</summary>
-        public static bool Send(SandboxRequest req)
-        {
-            var client = CurrentClient();
-            if (client == null) return false;
-            try
-            {
-                return client.SendByChannel(MsgRequest, req, Channel);
-            }
-            catch (Exception e)
-            {
-                GameApi.WarnOnce("send request", e);
-                return false;
-            }
-        }
-
         // ------------------------------------------------------------ server --
-        /// <summary>Сервер: исполнить запрос от имени его отправителя.</summary>
+        /// <summary>Сервер: проверить запрос и исполнить от имени отправителя.</summary>
         private static void OnRequest(NetworkMessage netMsg)
         {
+            SandboxRequest req;
             try
             {
-                var req = netMsg.ReadMessage<SandboxRequest>();
-                var requester = PlayerTargets.FindByConnection(netMsg.conn);
-                var target = req.TargetNetId != 0u
-                    ? PlayerTargets.FindByNetId(req.TargetNetId)
-                    : requester;
-                if (target == null) target = requester;
-                SandboxActions.ExecuteRequest(req, target);
+                req = netMsg.ReadMessage<SandboxRequest>();
             }
             catch (Exception e)
             {
-                GameApi.Warn("OnRequest", e);
+                GameApi.Warn("OnRequest parse", e);
+                return;
             }
+
+            byte fail = 0;
+            if (req.Version != Protocol.ProtoVersion)
+            {
+                GameApi.Warn("OnRequest", new InvalidOperationException(
+                    $"protocol version {req.Version}, expected {Protocol.ProtoVersion}"));
+                fail = 1;
+            }
+            else if (netMsg.conn != null &&
+                     !_limiter.TryConsume(netMsg.conn.GetHashCode(), Time.unscaledTime))
+            {
+                fail = 2;
+            }
+
+            if (fail != 0)
+            {
+                Ack(netMsg.conn, req.Action, 0);
+                return;
+            }
+
+            var requester = PlayerTargets.FindByConnection(netMsg.conn);
+            var target = req.TargetNetId != 0u
+                ? PlayerTargets.FindByNetId(req.TargetNetId)
+                : requester;
+            if (target == null) target = requester;
+
+            // режим прав: self запрещает действия над чужими целями
+            var mode = SandboxMenuPlugin.RemoteTargets;
+            bool selfOnly = mode != null &&
+                            string.Equals(mode.Value, "self", StringComparison.OrdinalIgnoreCase);
+            if (selfOnly && target != null && requester != null &&
+                !ReferenceEquals(target, requester))
+            {
+                Ack(netMsg.conn, req.Action, 0);
+                return;
+            }
+
+            req.P1 = Protocol.ClampCount(req.Action, req.P1);
+            req.P2 = Protocol.ClampCount(req.Action, req.P2);
+            req.Name = Protocol.ClampName(req.Name);
+            SandboxActions.ExecuteRequest(req, target);
+            Ack(netMsg.conn, req.Action, 1);
+        }
+
+        private static void Ack(NetworkConnection conn, byte action, byte ok)
+        {
+            if (conn == null) return;
+            try
+            {
+                conn.SendByChannel(MsgAck, new SandboxAck { Action = action, Ok = ok }, Channel);
+            }
+            catch (Exception e) { GameApi.WarnOnce("ack", e); }
         }
 
         /// <summary>Сервер: ответить pong'ом - клиент узнает, что мод есть.</summary>
@@ -253,6 +358,20 @@ namespace SandboxMenu
         {
             HostHasMod = true;
             _pongAt = Time.unscaledTime;
+        }
+
+        /// <summary>Клиент: сервер отклонил запрос - сказать об этом игроку.</summary>
+        private static void OnAck(NetworkMessage netMsg)
+        {
+            try
+            {
+                var ack = netMsg.ReadMessage<SandboxAck>();
+                if (ack.Ok != 0) return;
+                GameApi.SayErr(Texts.T(
+                    $"сервер отклонил запрос (действие {ack.Action}): версия, лимит или права",
+                    $"server rejected the request (action {ack.Action}): version, rate limit or rights"));
+            }
+            catch (Exception e) { GameApi.WarnOnce("OnAck", e); }
         }
     }
 }

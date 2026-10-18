@@ -1,0 +1,142 @@
+# RoR2 Sandbox Menu localization: russian<TAB>english.
+# Edit the values to reword either language; they override the built-in pairs.
+ (ты)	 (you)
+(нет)	(none)
+ItemCatalog: выдать, снять или сбросить стопку цели	ItemCatalog: give, remove or drop stacks to the target
+MasterCatalog: выжившие, монстры, дроны, боссы	MasterCatalog: survivors, monsters, drones, bosses
+PickupCatalog: предметы, оборудование, артефакты, дроны, монеты	PickupCatalog: items, equipment, artifacts, drones, coins
+UserProfile.HasSurvivorUnlocked возвращает true	UserProfile.HasSurvivorUnlocked returns true
+UserProfile.HasUnlockable возвращает true, пока включено	UserProfile.HasUnlockable returns true while on
+Авто-число	Auto count
+Выдать	Give
+ДРОП	DROPS
+Дроп	Drop
+КЛОНЫ	CLONES
+Кол-во	How many
+Команда	Team
+МЕНЮ	MENU
+ОБЪЕКТЫ СЦЕНЫ	STAGE PROPS
+Обновить список	Refresh list
+Откат к бэкапу	Restore backup
+Открыть всё (в файл профиля)	Grant all (write to profile)
+Очистить инвентарь	Clear inventory
+ПЕРСОНАЖИ	CHARACTERS
+ПРЕДМЕТЫ	ITEMS
+ПРЕДУПРЕЖДЕНИЯ	WARNINGS
+ПРОФИЛЬ	PROFILE
+Пересобрать каталоги	Rebuild catalogs
+Поиск	Search
+РАЗБЛОКИРОВКИ	UNLOCKS
+СОСТОЯНИЕ	STATE
+Снять	Take
+Спавн	Spawn
+ТОЧНО очистить?	SURE to clear?
+ТОЧНО? запись в сейв!	SURE? writes to the save!
+Убрать всех	Remove all
+Убрать дроп рядом	Clear drops nearby
+Убрать заспавненные	Remove spawned
+Убрать модели-призраки	Remove ghost models
+Убрать моих	Remove mine
+Убрать призванных	Remove spawned
+Цель	Target
+бэкапы	backups
+в этой сборке игры нет метода выдачи	this game build has no give method
+в этой сборке игры нет метода снятия	this game build has no remove method
+вернуть профиль из последнего бэкапа, без перезапуска	restore the profile from the latest backup, live
+весь дроп	all drops
+владелец: 	owner: 
+все выжившие	all survivors
+все капли и лежащие пикапы в мире	every droplet and lying pickup in the world
+все разблокировки и скины	all unlockables and skins
+всё просмотрено	all viewables seen
+выбросить пикапом в мир	throw into the world as a pickup
+выбросить у цели	throw at the target
+выкл - клоны стоят охраной на месте	off - clones hold position
+галочки не трогают файл сейва	toggles do not touch the save file
+да	yes
+действия мира недоступны: мод нужен и хосту	world actions unavailable: the host needs the mod too
+держать число (респавн)	keep the count up
+для этого тела нет AI-master'а: клон без AI может не двигаться	no AI master for this body: the clone may not move
+добавить стопку цели	add stacks to the target
+доубить тела без master'а: наследие старых удалений	finish off bodies without a master: leftovers of old removes
+дроны, турели, жуки - фильтр по имени префаба	drones, turrets, beetles - prefab name filter
+дроп меню	menu drops
+дроп не создан	no droplet created
+забег	run
+закрыть меню	close menu
+запись в файл сейва; обратима через откат	writes the save file; reversible via restore
+заспавнено	spawned
+зеркало спавна: удалить объекты меню	mirror of spawn: remove the menu's props
+зеркало спавна: уничтожить призванных меню	mirror of spawn: kill everything the menu summoned
+игрок	player
+игроки	players
+имена подтянутся после старта забега	names refresh once a run starts
+клиент, хост без мода	client, host without mod
+клиент, хост с модом	client, host has mod
+клон дерётся инвентарём владельца, а не хоста	the clone fights with the owner's items, not the host's
+клон сразу	spawn one now
+клоны	clones
+клоны: не выбран игрок	clones: no target player
+клоны: спавн не удался	clones: spawn failed
+клоны: у цели нет тела (нужен забег)	clones: target has no body (enter a run)
+клоны: убраны клоны игрока	clones: removed for this player
+команда	team
+копировать loadout	copy loadout
+копировать предметы	copy items
+копия персонажа на его AI-master'е: модель, скиллы, предметы владельца	a copy on the character's AI master: model, skills, owner's items
+метод выдачи отклонил аргументы	give method rejected arguments
+метод снятия отклонил аргументы	remove method rejected arguments
+не выбран игрок	no target player selected
+не найден master-префаб персонажа	could not resolve a master prefab
+некорректный индекс пикапа	invalid pickup index
+нет	none
+нет забега	no run
+нет сервера - хост или одиночная игра	not a server - host or play single player
+нет соединения с сервером: действие не отправлено	no server connection: action not sent
+объект: карта не найдена	prop: card not found
+объекты	props
+один объект у цели	one prop at the target
+перед выдачей профиль автоматически снимается в бэкап	a backup is taken automatically before granting
+перечитать карты спавна сцены	re-read the stage spawn cards
+перечитать каталоги игры заново	re-read the game catalogs
+персонаж: префаб не найден	character: prefab not found
+персонажи	masters
+пикапы	pickups
+по умолчанию: капли и пикапы в радиусе 15 м от цели	default: droplets and pickups within 15 m of the target
+погибшие клоны возвращаются	dead clones respawn
+предметы	items
+призвать рядом с целью	summon near the target
+профиль: бэкап не создан, выдача отменена	profile: backup failed, grant cancelled
+профиль: бэкап пустой	profile: backup is empty
+профиль: бэкапов нет - откатывать некуда	profile: no backups to restore
+профиль: нет локального пользователя	profile: no local user
+профиль: нет локального профиля - зайди в игру	profile: no local profile - enter the game first
+профиль: откат не удался	profile: restore failed
+пять клонов сразу	spawn five now
+разблокировок	unlockables
+роль	role
+ру	en
+сбросить поиск	clear search
+свернуть/развернуть	collapse/expand
+сводка раз в секунду	refreshed once per second
+сервер	server
+скинов	skins
+скины и варианты скиллов владельца	owner's skins and skill variants
+сколько клонов игра держит сама: погибшие возвращаются, пока включено «держать число»; кнопки +1/+5 добавляют к этому числу	how many clones the game keeps: dead ones respawn while 'keep the count up' is on; +1/+5 add to this number
+скрыть служебные	hide hidden
+следовать за игроком	follow the player
+снять все предметы цели	remove every item of the target
+снять стопку с цели	take stacks from the target
+стопка	stack
+сцена	stage
+тело	body
+то же самое лежит в BepInEx/LogOutput.log	the same lines live in BepInEx/LogOutput.log
+то, что может заспавнить текущая сцена	whatever the current stage can spawn
+только союзные	ally-like only
+три по кругу	three in a ring
+у карты нет префаба	card has no prefab
+у цели нет инвентаря	target has no inventory
+у цели нет тела/master'а (нужен забег)	target has no body/master (enter a run)
+убирает метки «new» в меню игры	removes 'new' markers in game menus
+удалить клонов всех игроков	remove every player's clones
+удалить клонов цели: тело и master	remove the target's clones: body and master

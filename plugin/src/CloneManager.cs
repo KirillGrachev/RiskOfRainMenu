@@ -61,6 +61,8 @@ namespace SandboxMenu
             public bool CopyInventory = true;
             public bool CopyLoadout = true;
             public bool Follow = true;
+            public float NextSpawnAt;
+            public float LastSyncAt;
         }
 
         private static readonly List<Group> _groups = new List<Group>();
@@ -74,10 +76,16 @@ namespace SandboxMenu
         /// <summary>Последняя ошибка спавна - для строки состояния меню.</summary>
         public static string LastError = "";
 
-        private static float _nextSpawnAt;
-
-        /// <summary>Потолок численности на одного игрока.</summary>
-        public const int MaxClones = 20;
+        /// <summary>Потолок численности на одного игрока: настройка Clone.MaxClones.</summary>
+        public static int MaxClones
+        {
+            get
+            {
+                var c = SandboxMenuPlugin.CloneMaxCount;
+                int v = c != null ? c.Value : 20;
+                return v < 1 ? 20 : v;
+            }
+        }
 
         // ------------------------------------------------------- per target --
         /// <summary>Группа владельца; create=false возвращает null, если её нет.</summary>
@@ -171,7 +179,6 @@ namespace SandboxMenu
             _groups.Clear();
             LastPrefabName = "";
             LastError = "";
-            _nextSpawnAt = 0f;
         }
 
         /// <summary>
@@ -247,11 +254,20 @@ namespace SandboxMenu
                 }
 
                 if (g.Alive.Count >= g.Desired) continue;
-                if (Time.unscaledTime < _nextSpawnAt) continue;
+                if (Time.unscaledTime < g.NextSpawnAt) continue;
 
                 var clone = SpawnOne(g);
                 if (clone != null) g.Alive.Add(clone);
-                else _nextSpawnAt = Time.unscaledTime + Mathf.Max(1f, RespawnDelay());
+                else g.NextSpawnAt = Time.unscaledTime + Mathf.Max(1f, RespawnDelay());
+
+                // эффекты владельца досинхронизируются периодически: предметы,
+                // взятые владельцем после спавна, доедают до клонов (минус 9)
+                if (g.CopyInventory && g.OwnerMaster != null &&
+                    Time.unscaledTime - g.LastSyncAt > 4f)
+                {
+                    g.LastSyncAt = Time.unscaledTime;
+                    foreach (var e in g.Alive) SyncInventory(e.Master, g.OwnerMaster);
+                }
             }
         }
 
@@ -472,6 +488,52 @@ namespace SandboxMenu
             OwnerBinding.Bind(master, src, body);
             OwnerBinding.EnsureLeader(master, body, g.Follow);
             return entry;
+        }
+
+        /// <summary>
+        /// Точная синхронизация инвентаря и слотов оборудования клона с master'ом
+        /// владельца: недостающие стаки додаются, лишние снимаются, оборудование
+        /// копируется по слотам (ранее оборудование доверялось одному
+        /// inventoryToCopy без двойной страховки).
+        /// </summary>
+        private static void SyncInventory(CharacterMaster cloneMaster, CharacterMaster ownerMaster)
+        {
+            try
+            {
+                var srcInv = ownerMaster != null ? ownerMaster.inventory : null;
+                var dstInv = cloneMaster != null ? cloneMaster.inventory : null;
+                if (srcInv == null || dstInv == null) return;
+
+                var srcOrder = new List<ItemIndex>(srcInv.itemAcquisitionOrder);
+                var dstOrder = new List<ItemIndex>(dstInv.itemAcquisitionOrder);
+
+                foreach (var idx in srcOrder)
+                {
+                    int have = Spawning.StackCount(dstInv, idx);
+                    int want = Spawning.StackCount(srcInv, idx);
+                    if (want > have) Spawning.GiveItemTo(dstInv, idx, want - have);
+                    else if (have > want) Spawning.RemoveItemFrom(dstInv, idx, have - want);
+                }
+                foreach (var idx in dstOrder)
+                {
+                    if (srcOrder.Contains(idx)) continue;
+                    int have = Spawning.StackCount(dstInv, idx);
+                    if (have > 0) Spawning.RemoveItemFrom(dstInv, idx, have);
+                }
+
+                // слоты оборудования копируем_compat-API: игра сама помечает её
+                // "For Mod Compat Only", то есть это штатный путь для модов;
+                // pragma гасит obsolete-ворнинг локально и осознанно
+                int slots = srcInv.GetEquipmentSlotCount();
+#pragma warning disable 618
+                for (int i = 0; i < slots; i++)
+                {
+                    var es = srcInv.GetEquipment((uint)i);
+                    dstInv.SetEquipment(es, (uint)i);
+                }
+#pragma warning restore 618
+            }
+            catch (Exception e) { GameApi.WarnOnce("SyncInventory", e); }
         }
 
         /// <summary>

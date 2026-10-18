@@ -1,27 +1,44 @@
 name: Sync game assembly
 
-# Кладёт RoR2.dll (и BepInEx core) из установленной игры в кэш GitHub Actions,
-# чтобы job 'build' в build.yml компилировал плагин против настоящей игровой
-# сборки: сборка здесь работает как API-чек против обновлений игры.
+# Кладёт RoR2.dll (и BepInEx core) в кэш GitHub Actions, чтобы job 'build'
+# в build.yml компилировал плагин против настоящей игровой сборки: сборка
+# здесь работает как API-чек против обновлений игры.
 #
-# Запускается ВРУЧНУЮ на self-hosted раннере, на машине с игрой (Actions ->
-# Sync game assembly -> Run workflow). Файлы игры остаются внутри кэша
-# конкретного репозитория и не попадают ни в репозиторий, ни в артефакты,
-# ни в релизы.
+# Файлы игры НЕ попадают ни в репозиторий, ни в артефакты, ни в релизы:
+# они остаются только внутри кэша конкретного репозитория.
+#
+# Два способа наполнить кэш (Actions -> Sync game assembly -> Run workflow):
+#
+#   source = runner   self-hosted раннер на машине с игрой (Windows):
+#                     скрипт сам заберёт RoR2.dll и BepInEx\core из папки игры;
+#   source = url      без раннера: workflow скачает архив с игрой-сборкой по
+#                     ссылке из секрета ROR2_REFS_URL (Settings -> Secrets and
+#                     variables -> Actions). Архив (zip): в корне RoR2.dll,
+#                     в папке bepinex/ - BepInEx.dll и 0Harmony.dll из
+#                     BepInEx\core. Ссылку можно держать в приватном релизе
+#                     или любом закрытом хранилище.
 #
 # После обновления игры: запустить ещё раз - ключ кэша включает sha256 сборки.
 
 on:
   workflow_dispatch:
     inputs:
+      source:
+        description: 'How to obtain the game assembly'
+        type: choice
+        default: runner
+        options:
+          - runner
+          - url
       game_dir:
-        description: 'Path to the game folder on the runner'
-        required: true
+        description: 'Path to the game folder on the runner (source=runner)'
+        required: false
         default: 'D:\SteamLibrary\steamapps\common\Risk of Rain 2'
 
 jobs:
   sync:
-    name: Copy game assembly into the Actions cache
+    name: Copy game assembly from the game folder (self-hosted)
+    if: github.event.inputs.source == 'runner'
     runs-on: [ self-hosted, windows ]
     steps:
       - name: Locate and copy
@@ -53,6 +70,57 @@ jobs:
           $sha | Out-File -Encoding ascii game-managed/SHA256.txt
           "sha256=$sha" | Out-File -Encoding ascii -Append $env:GITHUB_ENV
           Write-Host "RoR2.dll sha256 = $sha"
+
+      - name: Save to cache
+        uses: actions/cache/save@v4
+        with:
+          path: game-managed
+          key: ror2-managed-v1-${{ env.sha256 }}
+
+  sync-url:
+    name: Download the game assembly from ROR2_REFS_URL
+    if: github.event.inputs.source == 'url' && secrets.ROR2_REFS_URL != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download and unpack
+        env:
+          REFS_URL: ${{ secrets.ROR2_REFS_URL }}
+        run: |
+          set -e
+          mkdir -p game-managed
+          curl -sSL -o refs.zip "$REFS_URL"
+          python3 - <<'PY'
+          import zipfile, os, shutil
+          with zipfile.ZipFile("refs.zip") as z:
+              names = z.namelist()
+              def find(fn):
+                  return next((n for n in names if os.path.basename(n) == fn), None)
+              ror2 = find("RoR2.dll")
+              if not ror2:
+                  raise SystemExit("RoR2.dll not found inside the archive")
+              with z.open(ror2) as src, open("game-managed/RoR2.dll", "wb") as dst:
+                  shutil.copyfileobj(src, dst)
+              for fn in ("BepInEx.dll", "0Harmony.dll"):
+                  n = find(fn)
+                  if n:
+                      os.makedirs("game-managed/bepinex", exist_ok=True)
+                      with z.open(n) as src, open(f"game-managed/bepinex/{fn}", "wb") as dst:
+                          shutil.copyfileobj(src, dst)
+              hl = find("com.unity.multiplayer-hlapi.Runtime.dll")
+              if hl:
+                  with z.open(hl) as src, open("game-managed/" + os.path.basename(hl), "wb") as dst:
+                      shutil.copyfileobj(src, dst)
+          if not os.path.exists("game-managed/bepinex/BepInEx.dll"):
+              raise SystemExit("bepinex/BepInEx.dll not found inside the archive")
+          print("unpacked:", sorted(os.listdir("game-managed")))
+          PY
+
+      - name: Record the build identity
+        run: |
+          sha=$(sha256sum game-managed/RoR2.dll | cut -d' ' -f1)
+          echo "$sha" > game-managed/SHA256.txt
+          echo "sha256=$sha" >> "$GITHUB_ENV"
+          echo "RoR2.dll sha256 = $sha"
 
       - name: Save to cache
         uses: actions/cache/save@v4
