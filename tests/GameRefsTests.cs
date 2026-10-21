@@ -316,8 +316,8 @@ namespace SandboxMenu.Tests {
             Assert.That(Member(buffCatalog, "nonHiddenBuffIndices"), Is.Not.Null,
                     "BuffCatalog.nonHiddenBuffIndices исчез из игры: список бафов опустеет");
 
-            Assert.That(Method(teleportHelper, "TeleportBody", "CharacterBody", "Vector3"), Is.Not.Null,
-                    "TeleportHelper.TeleportBody(CharacterBody, Vector3) исчез из игры");
+            Assert.That(Method(teleportHelper, "TeleportBody", "CharacterBody", "Vector3", "Boolean", "Boolean"), Is.Not.Null,
+                    "TeleportHelper.TeleportBody(CharacterBody, Vector3, bool, bool) исчез из игры");
 
         }
 

@@ -455,7 +455,10 @@ namespace SandboxMenu {
             try {
 
                 var position = toBody.footPosition + Vector3.up * 0.5f;
-                TeleportHelper.TeleportBody(fromBody, position);
+                // 4-аргументный оверлод (2-аргументный игра помечает obsolete):
+                // forceOutOfVehicle - вытаскиваем из транспорта, teleportMinions -
+                // клоны и питомцы цели телепортируются вместе с ней
+                TeleportHelper.TeleportBody(fromBody, position, true, true);
                 GameApi.SayOk(Texts.T(
                         $"телепорт: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}",
                         $"teleport: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}"));
