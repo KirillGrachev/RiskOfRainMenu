@@ -39,12 +39,12 @@ namespace SandboxMenu
 
         private static readonly string[] TabsRu =
         {
-            "Разблокировки", "Клоны", "Персонажи", "Предметы", "Дроп", "Объекты", "Инфо"
+            "Разблокировки", "Клоны", "Персонажи", "Предметы", "Дроп", "Объекты", "Инфо", "Читы"
         };
 
         private static readonly string[] TabsEn =
         {
-            "Unlocks", "Clones", "Chars", "Items", "Drops", "Props", "Info"
+            "Unlocks", "Clones", "Chars", "Items", "Drops", "Props", "Info", "Cheats"
         };
 
         /// <summary>Открыто ли меню сейчас.</summary>
@@ -112,7 +112,7 @@ namespace SandboxMenu
         {
             if (_stateLoaded) return;
             _stateLoaded = true;
-            _tab = Mathf.Clamp(SandboxMenuPlugin.MenuTab != null ? SandboxMenuPlugin.MenuTab.Value : 0, 0, 6);
+            _tab = Mathf.Clamp(SandboxMenuPlugin.MenuTab != null ? SandboxMenuPlugin.MenuTab.Value : 0, 0, 7);
             _collapsed = SandboxMenuPlugin.MenuCollapsed != null && SandboxMenuPlugin.MenuCollapsed.Value;
             _rect.x = SandboxMenuPlugin.MenuX != null ? SandboxMenuPlugin.MenuX.Value : 90;
             _rect.y = SandboxMenuPlugin.MenuY != null ? SandboxMenuPlugin.MenuY.Value : 60;
@@ -139,11 +139,13 @@ namespace SandboxMenu
             }
 
             GUILayout.Space(2f);
-            // SelectionGrid с явной шириной: 7 равных кнопок, текст обрезается,
-            // полное имя - в тултипе; окно не растягивается под строку вкладок
+            // SelectionGrid в два ряда по четыре: подписи вкладок не обрезаются
+            // в ноль, как в одном ряду на 8+ кнопок; полное имя - в тултипе
             var tabs = Texts.Russian ? TabsRu : TabsEn;
-            int tab = GUILayout.SelectionGrid(_tab, tabs, tabs.Length, Theme.TabButton,
-                                              GUILayout.Width(_rect.width - 20f), GUILayout.Height(24f));
+            int perRow = Mathf.Min(4, tabs.Length);
+            int rows = (tabs.Length + perRow - 1) / perRow;
+            int tab = GUILayout.SelectionGrid(_tab, tabs, perRow, Theme.TabButton,
+                                              GUILayout.Width(_rect.width - 20f), GUILayout.Height(24f * rows));
             if (tab != _tab) _tab = tab;
             GUILayout.Space(4f);
             DrawStatusBar();
@@ -159,6 +161,7 @@ namespace SandboxMenu
                 case 3: ItemsTab.Draw(); break;
                 case 4: DropsTab.Draw(); break;
                 case 5: PropsTab.Draw(); break;
+                case 7: CheatsTab.Draw(); break;
                 default: InfoTab.Draw(); break;
             }
             GUILayout.EndScrollView();

@@ -55,6 +55,10 @@ namespace SandboxMenu {
                 return;
             }
 
+            // оптимистичное зеркало: вкладка читает локальное состояние,
+            // правда остаётся на сервере (тот же приём, что CloneManager)
+            CheatState.SetFlag(flag == CheatFlag.GodModeAll ? 0u : TargetId(t), flag, on);
+
             Send(new SandboxRequest {
                 Action = ActionCode.SetCheatFlag,
                 TargetNetId = TargetId(t),
@@ -73,6 +77,8 @@ namespace SandboxMenu {
                 RunSetCheatValue(t, (int)value, pct);
                 return;
             }
+
+            CheatState.SetValue(TargetId(t), value, pct);
 
             Send(new SandboxRequest {
                 Action = ActionCode.SetCheatValue,

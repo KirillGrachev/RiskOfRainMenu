@@ -69,6 +69,22 @@ namespace SandboxMenu {
 
         }
 
+        /// <summary>Текстовое поле фиксированной высоты; значение хранит вызывающая вкладка.</summary>
+        public static string TextField(string current, float width = 90f) {
+
+            return GUILayout.TextField(current ?? "", Theme.Field,
+                    GUILayout.Width(width), GUILayout.Height(RowHeight));
+
+        }
+
+        /// <summary>Разбор числа из поля: мусор и пустота дают fallback.</summary>
+        public static int ParseInt(string text, int fallback) {
+
+            int value;
+            return int.TryParse((text ?? "").Trim(), out value) ? value : fallback;
+
+        }
+
         /// <summary>Поле поиска с кнопкой сброса; значение хранит вызывающая вкладка.</summary>
         public static string SearchBox(string current) {
 

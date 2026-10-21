@@ -63,6 +63,17 @@ namespace SandboxMenu
             public SpawnCard Card;
         }
 
+        /// <summary>Запись списка бафов: имя, индекс, определение.</summary>
+        public class BuffInfo
+        {
+            /// <summary>Внутреннее имя бафа (BuffDef.name - токена локализации у бафов нет).</summary>
+            public string Name;
+            /// <summary>Индекс бафа для выдачи/снятия.</summary>
+            public BuffIndex Index;
+            /// <summary>Определение бафа (canStack и пр.).</summary>
+            public BuffDef Def;
+        }
+
         /// <summary>Все мастер-префабы игры, отсортированы по имени.</summary>
         public static readonly List<MasterInfo> Masters = new List<MasterInfo>();
         /// <summary>Все предметы ItemCatalog, отсортированы по имени.</summary>
@@ -71,6 +82,8 @@ namespace SandboxMenu
         public static readonly List<PickupInfo> Pickups = new List<PickupInfo>();
         /// <summary>Интерактивы текущей сцены, отсортированы по имени.</summary>
         public static readonly List<InteractableInfo> Interactables = new List<InteractableInfo>();
+        /// <summary>Видимые бафы BuffCatalog, отсортированы по имени.</summary>
+        public static readonly List<BuffInfo> Buffs = new List<BuffInfo>();
 
         /// <summary>Каталоги построены хотя бы раз за сессию.</summary>
         public static bool Built;
@@ -91,6 +104,7 @@ namespace SandboxMenu
             Items.Clear();
             Pickups.Clear();
             Interactables.Clear();
+            Buffs.Clear();
             Built = false;
             CachedStage = null;
         }
@@ -130,10 +144,11 @@ namespace SandboxMenu
             BuildMasters();
             BuildItems();
             BuildPickups();
+            BuildBuffs();
             RefreshInteractables();
             Built = true;
             GameApi.Info($"catalogs built: masters={Masters.Count} items={Items.Count} " +
-                         $"pickups={Pickups.Count} interactables={Interactables.Count}");
+                         $"pickups={Pickups.Count} interactables={Interactables.Count} buffs={Buffs.Count}");
         }
 
         private static void BuildMasters()
@@ -202,6 +217,25 @@ namespace SandboxMenu
                 Pickups.Sort((x, y) => CompareByName(x.Name, y.Name));
             }
             catch (Exception e) { GameApi.Warn("BuildPickups", e); }
+        }
+
+        private static void BuildBuffs()
+        {
+            try
+            {
+                // nonHiddenBuffIndices - готовый отбор игры: служебные бафы
+                // (маркеры состояний, технические флаги) в меню не нужны
+                foreach (var idx in BuffCatalog.nonHiddenBuffIndices)
+                {
+                    var def = BuffCatalog.GetBuffDef(idx);
+                    if (def == null) continue;
+                    string name = def.name;
+                    if (string.IsNullOrEmpty(name)) name = idx.ToString();
+                    Buffs.Add(new BuffInfo { Name = name, Index = idx, Def = def });
+                }
+                Buffs.Sort((x, y) => CompareByName(x.Name, y.Name));
+            }
+            catch (Exception e) { GameApi.Warn("BuildBuffs", e); }
         }
 
         /// Интерактивы берём из текущей стадии: их набор зависит от сцены.
