@@ -99,7 +99,14 @@ namespace SandboxMenu
             _harmony = new Harmony(PluginInfo.Guid);
             _harmony.PatchAll(typeof(UnlockPatches));
             _harmony.PatchAll(typeof(DropHooks));
+            // ВАЖНО: PatchAll(Type) обходит только сам тип и его ВЛОЖЕННЫЕ классы,
+            // а патчи читов - отдельные top-level классы одного файла, поэтому
+            // регистрируются каждый своим вызовом. Без этого бессмертие, ваншот
+            // и множители молча не работали бы (VerifyHarmonyTargets ругался).
             _harmony.PatchAll(typeof(CheatPatches));
+            _harmony.PatchAll(typeof(TakeDamageCheatPatch));
+            _harmony.PatchAll(typeof(AttackSpeedCheatPatch));
+            _harmony.PatchAll(typeof(MoveSpeedCheatPatch));
             VerifyHarmonyTargets();
 
             Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded. Menu key: {MenuKey.Value}");
