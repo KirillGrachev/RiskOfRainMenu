@@ -316,8 +316,20 @@ namespace SandboxMenu.Tests {
             Assert.That(Member(buffCatalog, "nonHiddenBuffIndices"), Is.Not.Null,
                     "BuffCatalog.nonHiddenBuffIndices исчез из игры: список бафов опустеет");
 
-            Assert.That(Method(teleportHelper, "TeleportBody", "CharacterBody", "Vector3", "Boolean", "Boolean"), Is.Not.Null,
-                    "TeleportHelper.TeleportBody(CharacterBody, Vector3, bool, bool) исчез из игры");
+            Assert.That(Method(teleportHelper, "TeleportBody", "TeleportBodyArgs"), Is.Not.Null,
+                    "TeleportHelper.TeleportBody(TeleportBodyArgs) исчез из игры");
+
+            var teleportArgs = teleportHelper.GetNestedType("TeleportBodyArgs",
+                    BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(teleportArgs, Is.Not.Null, "TeleportHelper.TeleportBodyArgs исчез из игры");
+
+            foreach (string fieldName in new[] { "targetPosition", "forceOutOfVehicle", "teleportMinions", "resetStateMachines" }) {
+                Assert.That(InstanceField(teleportArgs, fieldName), Is.Not.Null,
+                        $"TeleportBodyArgs.{fieldName} исчез из игры");
+            }
+
+            Assert.That(WritableProp(teleportArgs, "body"), Is.Not.Null,
+                    "TeleportBodyArgs.body (settable) исчез из игры");
 
         }
 

@@ -455,10 +455,18 @@ namespace SandboxMenu {
             try {
 
                 var position = toBody.footPosition + Vector3.up * 0.5f;
-                // 4-аргументный оверлод (2-аргументный игра помечает obsolete):
-                // forceOutOfVehicle - вытаскиваем из транспорта, teleportMinions -
-                // клоны и питомцы цели телепортируются вместе с ней
-                TeleportHelper.TeleportBody(fromBody, position, true, true);
+                // TeleportBodyArgs - obsolete-сообщение 2-аргументного оверлода
+                // обещает 4-аргументный, но реально в dll его нет: полный набор
+                // (forceOutOfVehicle, teleportMinions, resetStateMachines) живёт
+                // в структурных аргументах. Миньонов берём с собой: клоны меню
+                // не должны оставаться на старой стадии.
+                TeleportHelper.TeleportBody(new TeleportHelper.TeleportBodyArgs {
+                    body = fromBody,
+                    targetPosition = position,
+                    forceOutOfVehicle = true,
+                    teleportMinions = true,
+                    resetStateMachines = false
+                });
                 GameApi.SayOk(Texts.T(
                         $"телепорт: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}",
                         $"teleport: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}"));
