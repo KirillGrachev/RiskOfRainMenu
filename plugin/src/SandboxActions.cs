@@ -253,9 +253,10 @@ namespace SandboxMenu
                     CloneManager.KeepAlive = req.P1 != 0;
                     break;
                 default:
-                    // коды трейнера (читы, экономика) исполняет CheatActions;
-                    // будущие диспетчеры забега подключаются той же цепочкой
+                    // коды трейнера (читы, экономика) и управления забегом
+                    // исполняют специализированные диспетчеры той же цепочкой
                     if (CheatActions.TryExecute(req, target)) break;
+                    if (RunControl.TryExecute(req, target)) break;
                     GameApi.Warn("ExecuteRequest", new System.NotSupportedException("action " + req.Action));
                     break;
             }

@@ -248,6 +248,79 @@ namespace SandboxMenu.Tests {
 
         }
 
+        /// <summary>Цели управления забегом: таймер, сложность, стадии, телепортер, артефакты, телепорт.</summary>
+        [Test]
+        public void RunControlTargets_ExistInGameAssembly() {
+
+            var run = _game.GetType("RoR2.Run", true);
+            var sceneCatalog = _game.GetType("RoR2.SceneCatalog", true);
+            var sceneDef = _game.GetType("RoR2.SceneDef", true);
+            var teleporter = _game.GetType("RoR2.TeleporterInteraction", true);
+            var holdout = _game.GetType("RoR2.HoldoutZoneController", true);
+            var artifacts = _game.GetType("RoR2.RunArtifactManager", true);
+            var artifactCatalog = _game.GetType("RoR2.ArtifactCatalog", true);
+            var artifactDef = _game.GetType("RoR2.ArtifactDef", true);
+            var teleportHelper = _game.GetType("RoR2.TeleportHelper", true);
+            var buffCatalog = _game.GetType("RoR2.BuffCatalog", true);
+
+            Assert.That(AnyMethod(run, "SetForcePauseRunStopwatch"), Is.Not.Null,
+                    "Run.SetForcePauseRunStopwatch исчез из игры: заморозка таймера сломается");
+            Assert.That(Method(run, "SetRunStopwatch", "Single"), Is.Not.Null,
+                    "Run.SetRunStopwatch(float) исчез из игры");
+            Assert.That(AnyMethod(run, "GetRunStopwatch"), Is.Not.Null,
+                    "Run.GetRunStopwatch исчез из игры");
+            Assert.That(Method(run, "AdvanceStage", "SceneDef"), Is.Not.Null,
+                    "Run.AdvanceStage(SceneDef) исчез из игры: переход по стадиям сломается");
+            Assert.That(AnyMethod(run, "RecalculateDifficultyCoefficent"), Is.Not.Null,
+                    "Run.RecalculateDifficultyCoefficent исчез из игры");
+            Assert.That(WritableProp(run, "selectedDifficulty"), Is.Not.Null,
+                    "Run.selectedDifficulty (settable) исчез из игры");
+            Assert.That(Member(run, "instance"), Is.Not.Null, "Run.instance исчез из игры");
+
+            Assert.That(Member(sceneCatalog, "sceneDefCount"), Is.Not.Null,
+                    "SceneCatalog.sceneDefCount исчез из игры");
+            Assert.That(AnyMethod(sceneCatalog, "GetSceneDef"), Is.Not.Null,
+                    "SceneCatalog.GetSceneDef исчез из игры");
+            Assert.That(AnyMethod(sceneCatalog, "GetSceneDefFromSceneName"), Is.Not.Null,
+                    "SceneCatalog.GetSceneDefFromSceneName исчез из игры");
+            Assert.That(InstanceProp(sceneDef, "cachedName"), Is.Not.Null,
+                    "SceneDef.cachedName исчез из игры");
+            Assert.That(InstanceField(sceneDef, "nameToken"), Is.Not.Null,
+                    "SceneDef.nameToken исчез из игры");
+            Assert.That(InstanceField(sceneDef, "sceneType"), Is.Not.Null,
+                    "SceneDef.sceneType исчез из игры");
+
+            Assert.That(Member(teleporter, "instance"), Is.Not.Null,
+                    "TeleporterInteraction.instance исчез из игры");
+            Assert.That(InstanceProp(teleporter, "holdoutZoneController"), Is.Not.Null,
+                    "TeleporterInteraction.holdoutZoneController исчез из игры: мгновенная зарядка сломается");
+            Assert.That(InstanceProp(holdout, "charge"), Is.Not.Null,
+                    "HoldoutZoneController.charge исчез из игры");
+            Assert.That(InstanceField(holdout, "_charge"), Is.Not.Null,
+                    "HoldoutZoneController._charge исчез из игры: reflection-зарядку пора обновлять");
+            Assert.That(InstanceField(holdout, "maxCharge"), Is.Not.Null,
+                    "HoldoutZoneController.maxCharge исчез из игры");
+
+            Assert.That(Member(artifacts, "instance"), Is.Not.Null,
+                    "RunArtifactManager.instance исчез из игры");
+            Assert.That(AnyMethod(artifacts, "IsArtifactEnabled"), Is.Not.Null,
+                    "RunArtifactManager.IsArtifactEnabled исчез из игры");
+            Assert.That(AnyMethod(artifacts, "SetArtifactEnabledServer"), Is.Not.Null,
+                    "RunArtifactManager.SetArtifactEnabledServer исчез из игры");
+            Assert.That(Member(artifactCatalog, "artifactCount"), Is.Not.Null,
+                    "ArtifactCatalog.artifactCount исчез из игры");
+            Assert.That(AnyMethod(artifactCatalog, "GetArtifactDef"), Is.Not.Null,
+                    "ArtifactCatalog.GetArtifactDef исчез из игры");
+            Assert.That(InstanceField(artifactDef, "nameToken"), Is.Not.Null,
+                    "ArtifactDef.nameToken исчез из игры");
+            Assert.That(Member(buffCatalog, "nonHiddenBuffIndices"), Is.Not.Null,
+                    "BuffCatalog.nonHiddenBuffIndices исчез из игры: список бафов опустеет");
+
+            Assert.That(Method(teleportHelper, "TeleportBody", "CharacterBody", "Vector3"), Is.Not.Null,
+                    "TeleportHelper.TeleportBody(CharacterBody, Vector3) исчез из игры");
+
+        }
+
         /// <summary>Поле экземпляра (публичное или нет) в объявлении типа.</summary>
         private static FieldInfo InstanceField(Type owner, string name) {
 

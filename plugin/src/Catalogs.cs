@@ -74,6 +74,24 @@ namespace SandboxMenu
             public BuffDef Def;
         }
 
+        /// <summary>Запись списка стадий: показываемое имя и внутреннее имя сцены.</summary>
+        public class StageInfo
+        {
+            /// <summary>Локализованное имя для меню.</summary>
+            public string Name;
+            /// <summary>Внутреннее имя сцены (SceneDef.cachedName) - стабильный ключ телепорта.</summary>
+            public string SceneName;
+        }
+
+        /// <summary>Запись списка артефактов: имя и индекс.</summary>
+        public class ArtifactInfo
+        {
+            /// <summary>Локализованное имя для меню.</summary>
+            public string Name;
+            /// <summary>Индекс артефакта для включения/выключения.</summary>
+            public ArtifactIndex Index;
+        }
+
         /// <summary>Все мастер-префабы игры, отсортированы по имени.</summary>
         public static readonly List<MasterInfo> Masters = new List<MasterInfo>();
         /// <summary>Все предметы ItemCatalog, отсортированы по имени.</summary>
@@ -84,6 +102,10 @@ namespace SandboxMenu
         public static readonly List<InteractableInfo> Interactables = new List<InteractableInfo>();
         /// <summary>Видимые бафы BuffCatalog, отсортированы по имени.</summary>
         public static readonly List<BuffInfo> Buffs = new List<BuffInfo>();
+        /// <summary>Стадийные сцены SceneCatalog, отсортированы по имени.</summary>
+        public static readonly List<StageInfo> Stages = new List<StageInfo>();
+        /// <summary>Все артефакты ArtifactCatalog, отсортированы по имени.</summary>
+        public static readonly List<ArtifactInfo> Artifacts = new List<ArtifactInfo>();
 
         /// <summary>Каталоги построены хотя бы раз за сессию.</summary>
         public static bool Built;
@@ -105,6 +127,8 @@ namespace SandboxMenu
             Pickups.Clear();
             Interactables.Clear();
             Buffs.Clear();
+            Stages.Clear();
+            Artifacts.Clear();
             Built = false;
             CachedStage = null;
         }
@@ -145,10 +169,13 @@ namespace SandboxMenu
             BuildItems();
             BuildPickups();
             BuildBuffs();
+            BuildStages();
+            BuildArtifacts();
             RefreshInteractables();
             Built = true;
             GameApi.Info($"catalogs built: masters={Masters.Count} items={Items.Count} " +
-                         $"pickups={Pickups.Count} interactables={Interactables.Count} buffs={Buffs.Count}");
+                         $"pickups={Pickups.Count} interactables={Interactables.Count} buffs={Buffs.Count} " +
+                         $"stages={Stages.Count} artifacts={Artifacts.Count}");
         }
 
         private static void BuildMasters()
@@ -236,6 +263,47 @@ namespace SandboxMenu
                 Buffs.Sort((x, y) => CompareByName(x.Name, y.Name));
             }
             catch (Exception e) { GameApi.Warn("BuildBuffs", e); }
+        }
+
+        private static void BuildStages()
+        {
+            try
+            {
+                int count = SceneCatalog.sceneDefCount;
+                for (int i = 0; i < count; i++)
+                {
+                    var def = SceneCatalog.GetSceneDef((SceneIndex)i);
+                    if (def == null) continue;
+                    // только игровые стадии: меню, катсцены и intermission'ы телепортом не нужны
+                    if (def.sceneType != SceneType.Stage && def.sceneType != SceneType.UntimedStage) continue;
+                    string sceneName = def.cachedName;
+                    if (string.IsNullOrEmpty(sceneName)) continue;
+                    string display = GameApi.Localize(def.nameToken);
+                    if (string.IsNullOrEmpty(display) || display == def.nameToken) display = sceneName;
+                    Stages.Add(new StageInfo { Name = display, SceneName = sceneName });
+                }
+                Stages.Sort((x, y) => CompareByName(x.Name, y.Name));
+            }
+            catch (Exception e) { GameApi.Warn("BuildStages", e); }
+        }
+
+        private static void BuildArtifacts()
+        {
+            try
+            {
+                int count = ArtifactCatalog.artifactCount;
+                for (int i = 1; i <= count; i++)
+                {
+                    var idx = (ArtifactIndex)i;
+                    var def = ArtifactCatalog.GetArtifactDef(idx);
+                    if (def == null) continue;
+                    string name = GameApi.Localize(def.nameToken);
+                    if (string.IsNullOrEmpty(name) || name == def.nameToken) name = def.cachedName;
+                    Artifacts.Add(new ArtifactInfo { Name = name, Index = idx });
+                }
+                Artifacts.Sort((x, y) => CompareByName(x.Name, y.Name));
+            }
+            catch (Exception e) { GameApi.Warn("BuildArtifacts", e); }
         }
 
         /// Интерактивы берём из текущей стадии: их набор зависит от сцены.
