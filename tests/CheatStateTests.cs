@@ -130,10 +130,33 @@ namespace SandboxMenu.Tests {
         }
 
         [Test]
+        public void AnyJumpTuning_TracksInfiniteJumpsFlag() {
+
+            Assert.That(CheatState.AnyJumpTuning, Is.False);
+
+            CheatState.SetFlag(11u, CheatFlag.InfiniteJumps, true);
+            Assert.That(CheatState.AnyJumpTuning, Is.True);
+            Assert.That(CheatState.HasFlag(11u, CheatFlag.InfiniteJumps), Is.True);
+            Assert.That(CheatState.HasFlag(22u, CheatFlag.InfiniteJumps), Is.False,
+                    "прыжки - личный флаг, соседу не достаются");
+
+            CheatState.SetFlag(11u, CheatFlag.InfiniteJumps, false);
+            Assert.That(CheatState.AnyJumpTuning, Is.False,
+                    "выключение гасит флаг быстрого пути геттера");
+
+            CheatState.SetFlag(33u, CheatFlag.InfiniteJumps, true);
+            Assert.That(CheatState.AnyJumpTuning, Is.True);
+            CheatState.Forget(33u);
+            Assert.That(CheatState.AnyJumpTuning, Is.False, "Forget гасит счётчик");
+
+        }
+
+        [Test]
         public void KnownIds_RejectGarbageFromNetwork() {
 
             Assert.That(CheatState.IsKnownFlag(1), Is.True);
             Assert.That(CheatState.IsKnownFlag(4), Is.True);
+            Assert.That(CheatState.IsKnownFlag(5), Is.True);
             Assert.That(CheatState.IsKnownFlag(0), Is.False);
             Assert.That(CheatState.IsKnownFlag(200), Is.False);
             Assert.That(CheatState.IsKnownValue(3), Is.True);
@@ -160,16 +183,22 @@ namespace SandboxMenu.Tests {
         public void ResetRun_ClearsEverything() {
 
             CheatState.SetFlag(11u, CheatFlag.GodMode, true);
+            CheatState.SetFlag(11u, CheatFlag.InfiniteJumps, true);
             CheatState.SetValue(22u, CheatValue.MoveSpeedPct, 200);
             CheatState.GodModeAll = true;
             CheatState.FreezeTimer = true;
+            CheatState.TimeScalePct = 250;
 
             CheatState.ResetRun();
 
             Assert.That(CheatState.HasFlag(11u, CheatFlag.GodMode), Is.False);
+            Assert.That(CheatState.HasFlag(11u, CheatFlag.InfiniteJumps), Is.False);
+            Assert.That(CheatState.AnyJumpTuning, Is.False);
             Assert.That(CheatState.ValueOf(22u, CheatValue.MoveSpeedPct), Is.EqualTo(CheatState.DefaultPct));
             Assert.That(CheatState.GodModeAll, Is.False);
             Assert.That(CheatState.FreezeTimer, Is.False);
+            Assert.That(CheatState.TimeScalePct, Is.EqualTo(CheatState.DefaultPct),
+                    "скорость игры между забегами штатная");
 
         }
 

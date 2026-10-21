@@ -12,7 +12,8 @@ namespace SandboxMenu {
         GodMode = 1,
         OneHitKill = 2,
         NoCooldown = 3,
-        GodModeAll = 4
+        GodModeAll = 4,
+        InfiniteJumps = 5
 
     }
 
@@ -80,6 +81,13 @@ namespace SandboxMenu {
 
         /// <summary>Заморозка таймера забега (зеркало серверного состояния).</summary>
         public static bool FreezeTimer;
+
+        /// <summary>
+        /// Скорость игры в процентах (глобальная, как FreezeTimer; 100 = штатная).
+        /// Держится на сервере покадрово (RunControl.ApplyTimeScaleFrame),
+        /// поэтому между забегами и при выходе из плагина возвращается к 100.
+        /// </summary>
+        public static int TimeScalePct = DefaultPct;
 
         /// <summary>Кламп процентов множителя в рабочие границы.</summary>
         public static int ClampPct(int raw) {
@@ -157,6 +165,10 @@ namespace SandboxMenu {
                 set.Add(flag);
             } else {
                 set.Remove(flag);
+            }
+
+            if (flag == CheatFlag.InfiniteJumps) {
+                RecountJumpTuning();
             }
 
         }
@@ -285,12 +297,44 @@ namespace SandboxMenu {
 
         }
 
+        private static int _jumpTuningCount;
+
+        /// <summary>
+        /// Есть ли у кого-нибудь флаг бесконечных прыжков. Флаг читается
+        /// Harmony-postfix'ом геттера CharacterBody.maxJumpCount каждый прыжок:
+        /// без включённого чита патч выходит сразу, без резолва владельца.
+        /// </summary>
+        public static bool AnyJumpTuning {
+
+            get {
+                return _jumpTuningCount > 0;
+            }
+
+        }
+
+        private static void RecountJumpTuning() {
+
+            int count = 0;
+
+            foreach (var set in _flags.Values) {
+
+                if (set.Contains(CheatFlag.InfiniteJumps)) {
+                    count++;
+                }
+
+            }
+
+            _jumpTuningCount = count;
+
+        }
+
         /// <summary>Забыть игрока (отключился): не копим мёртвые записи.</summary>
         public static void Forget(uint netId) {
 
             _flags.Remove(netId);
             _values.Remove(netId);
             RecountSpeedTuning();
+            RecountJumpTuning();
 
         }
 
@@ -301,7 +345,9 @@ namespace SandboxMenu {
             _values.Clear();
             GodModeAll = false;
             FreezeTimer = false;
+            TimeScalePct = DefaultPct;
             RecountSpeedTuning();
+            RecountJumpTuning();
 
         }
 

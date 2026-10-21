@@ -46,6 +46,8 @@ namespace SandboxMenu {
             GUILayout.Space(2f);
             DrawPlayers();
             GUILayout.Space(2f);
+            DrawLandmarks();
+            GUILayout.Space(2f);
             DrawStages();
             GUILayout.Space(2f);
             DrawArtifacts();
@@ -100,6 +102,25 @@ namespace SandboxMenu {
                 }
 
             GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+
+                GUILayout.Label(Texts.T("Скорость игры, %", "Game speed, %"), Theme.Name,
+                        GUILayout.Width(110f), GUILayout.Height(Widgets.RowHeight));
+                int nextScale = Widgets.SliderInline(CheatState.TimeScalePct,
+                        CheatState.MinPct, 400, 200f);
+
+            GUILayout.EndHorizontal();
+
+            if (nextScale != CheatState.TimeScalePct) {
+
+                RunControl.SetTimeScale(nextScale);
+
+            }
+
+            Widgets.Hint(Texts.T(
+                    "скорость держится на сервере: симуляция всего мира идёт быстрее или медленнее",
+                    "the scale lives on the server: the whole world simulation runs faster or slower"));
 
         }
 
@@ -329,6 +350,84 @@ namespace SandboxMenu {
                                 "move the requester to the selected target"))) {
                     RunControl.TeleportPlayer(true);
                 }
+
+            GUILayout.EndHorizontal();
+
+        }
+
+        // -------------------------------------------------------- landmarks --
+        private static void DrawLandmarks() {
+
+            Widgets.Header(Texts.T("ТЕЛЕПОРТ ПО КАРТЕ", "MAP TELEPORT"), Theme.HeaderBlue,
+                    Texts.T("переносит выбранную цель; ориентир ищется на сервере среди живых объектов стадии",
+                            "moves the selected target; the landmark is looked up on the server among the stage's live objects"));
+
+            GUILayout.BeginHorizontal();
+
+                if (Widgets.Button(Texts.T("К телепорту", "To teleporter"), 128f,
+                        Texts.T("телепорт текущей стадии", "the stage teleporter"))) {
+                    RunControl.TeleportLandmark(RunControl.KindTeleporter);
+                }
+
+                if (Widgets.Button(Texts.T("К сундуку", "To chest"), 118f,
+                        Texts.T("ближайший к цели сундук", "the chest nearest to the target"))) {
+                    RunControl.TeleportLandmark(RunControl.KindChest);
+                }
+
+                if (Widgets.Button(Texts.T("К алтарю", "To shrine"), 118f,
+                        Texts.T("ближайший к цели алтарь", "the shrine nearest to the target"))) {
+                    RunControl.TeleportLandmark(RunControl.KindShrine);
+                }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+
+                if (Widgets.Button(Texts.T("К боссу", "To boss"), 128f,
+                        Texts.T("ближайший живой босс (в сторону от него)", "the nearest living boss (offset to the side)"))) {
+                    RunControl.TeleportLandmark(RunControl.KindBoss);
+                }
+
+                if (Widgets.Button(Texts.T("На старт стадии", "To stage spawn"), 158f,
+                        Texts.T("точка появления игроков", "the player spawn point"))) {
+                    RunControl.TeleportLandmark(RunControl.KindSpawn);
+                }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.Space(2f);
+            Widgets.Header(Texts.T("ТОЧКИ", "WAYPOINTS"), Theme.HeaderBlue,
+                    Texts.T("три слота; точка помнит свою стадию и применяется только на ней",
+                            "three slots; a point remembers its stage and only applies there"));
+
+            for (int slot = 1; slot <= RunControl.WaypointCount; slot++) {
+                DrawWaypointRow(slot);
+            }
+
+        }
+
+        private static void DrawWaypointRow(int slot) {
+
+            string scene = RunControl.WaypointScene(slot);
+            string state = scene != null
+                    ? Texts.T("стадия", "stage") + ": " + scene
+                    : Texts.T("пусто", "empty");
+
+            GUILayout.BeginHorizontal();
+
+                if (Widgets.Button(Texts.T($"Сохр. {slot}", $"Save {slot}"), 90f,
+                        Texts.T("запомнить позицию цели", "remember the target's position"))) {
+                    RunControl.WaypointSave(slot);
+                }
+
+                if (Widgets.Button(Texts.T($"Перенести {slot}", $"Go to {slot}"), 110f,
+                        Texts.T("вернуть цель в точку (только на её стадии)",
+                                "return the target to the point (only on its stage"))) {
+                    RunControl.WaypointLoad(slot);
+                }
+
+                GUILayout.Label(new GUIContent(state, state), Theme.Small,
+                        GUILayout.Height(Widgets.RowHeight));
 
             GUILayout.EndHorizontal();
 

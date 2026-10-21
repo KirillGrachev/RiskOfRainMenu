@@ -59,6 +59,47 @@ namespace SandboxMenu {
 
             _search = Widgets.SearchBox(_search);
 
+            Widgets.Header(Texts.T("СЫГРАТЬ ЗА", "PLAY AS"), Theme.HeaderBlue,
+                    Texts.T("мгновенная смена персонажа цели; заодно воскрешает мёртвых",
+                            "instantly rebody the target; doubles as a revive"));
+
+            int survivors = 0;
+
+            foreach (var survivor in Catalogs.Survivors) {
+
+                if (!Widgets.Matches(_search, survivor.Name) &&
+                        !Widgets.Matches(_search, survivor.BodyName)) {
+                    continue;
+                }
+
+                if (survivors >= 30) {
+
+                    survivors++;
+                    continue;
+
+                }
+
+                survivors++;
+
+                GUILayout.BeginHorizontal();
+                    if (Widgets.Button(Texts.T("Стать", "Become"), 62f,
+                            Texts.T("цель мгновенно становится этим выжившим",
+                                    "the target instantly becomes this survivor"))) {
+                        CheatActions.RespawnAs(survivor.BodyName);
+                    }
+
+                    GUILayout.Label(new GUIContent(survivor.Name, survivor.BodyName), Theme.Name);
+                GUILayout.EndHorizontal();
+
+            }
+
+            Widgets.Footer(System.Math.Min(survivors, 30), Catalogs.Survivors.Count);
+
+            GUILayout.Space(6f);
+            Widgets.Header(Texts.T("СПАВН", "SPAWN"), Theme.HeaderRed,
+                    Texts.T("призвать master-префаб рядом с целью",
+                            "summon a master prefab near the target"));
+
             var team = TeamValues[_teamIndex];
             int shown = 0;
 

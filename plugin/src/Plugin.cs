@@ -107,6 +107,7 @@ namespace SandboxMenu
             _harmony.PatchAll(typeof(TakeDamageCheatPatch));
             _harmony.PatchAll(typeof(AttackSpeedCheatPatch));
             _harmony.PatchAll(typeof(MoveSpeedCheatPatch));
+            _harmony.PatchAll(typeof(MaxJumpCountCheatPatch));
             VerifyHarmonyTargets();
 
             Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded. Menu key: {MenuKey.Value}");
@@ -117,6 +118,7 @@ namespace SandboxMenu
             try { Run.onRunStartGlobal -= HandleRunStart; } catch { /* best effort */ }
             try { Stage.onStageStartGlobal -= HandleStageStart; } catch { /* best effort */ }
             try { FlyController.Shutdown(); } catch { /* best effort */ }
+            try { RunControl.ShutdownTimeScale(); } catch { /* best effort */ }
             try { MenuUI.PersistState(); } catch { /* best effort */ }
             try { if (_harmony != null) _harmony.UnpatchSelf(); } catch { /* best effort */ }
         }
@@ -139,6 +141,7 @@ namespace SandboxMenu
                 AccessTools.Method(typeof(HealthComponent), "TakeDamage", new[] { typeof(DamageInfo) }),
                 AccessTools.PropertyGetter(typeof(CharacterBody), "attackSpeed"),
                 AccessTools.PropertyGetter(typeof(CharacterBody), "moveSpeed"),
+                AccessTools.PropertyGetter(typeof(CharacterBody), "maxJumpCount"),
             };
 
             var patched = new HashSet<MethodBase>();
@@ -197,6 +200,10 @@ namespace SandboxMenu
             try { FlyController.Tick(); }
             catch (Exception e) { GameApi.WarnOnce("FlyController.Tick", e); }
 
+            // масштаб времени держится покадрово: игра может перехватить timeScale
+            try { RunControl.ApplyTimeScaleFrame(); }
+            catch (Exception e) { GameApi.WarnOnce("RunControl.ApplyTimeScaleFrame", e); }
+
             // поддержку клонов и привязку миньонов не обязательно считать каждый кадр
             _updateAccumulator += Time.unscaledDeltaTime;
             if (_updateAccumulator >= 0.5f)
@@ -223,6 +230,9 @@ namespace SandboxMenu
 
         private void OnGUI()
         {
+            // ESP рисуется до окна: меню перекрывает маркеры, а не наоборот
+            try { EspOverlay.Draw(); }
+            catch (Exception e) { GameApi.WarnOnce("EspOverlay.Draw", e); }
             try { MenuUI.Draw(); }
             catch (Exception e) { GameApi.WarnOnce("MenuUI.Draw", e); }
         }

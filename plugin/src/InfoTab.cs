@@ -152,8 +152,16 @@ namespace SandboxMenu {
                 line += "   [freeze]";
             }
 
+            if (CheatState.TimeScalePct != CheatState.DefaultPct) {
+                line += $"   [time {CheatState.TimeScalePct}%]";
+            }
+
             if (FlyController.Enabled) {
                 line += "   [fly]";
+            }
+
+            if (EspOverlay.Enabled) {
+                line += "   [esp]";
             }
 
             return line;

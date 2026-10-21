@@ -59,6 +59,8 @@ namespace SandboxMenu {
             GUILayout.Space(2f);
             DrawSkills(id);
             GUILayout.Space(2f);
+            DrawTraversal(id);
+            GUILayout.Space(2f);
             DrawEnemies();
             GUILayout.Space(2f);
             DrawEconomy(target);
@@ -66,6 +68,8 @@ namespace SandboxMenu {
             DrawBuffs();
             GUILayout.Space(2f);
             DrawFlight();
+            GUILayout.Space(2f);
+            DrawOverlays();
 
         }
 
@@ -513,6 +517,41 @@ namespace SandboxMenu {
 
             if (Mathf.Abs(nextSpeed - current) > 0.5f && SandboxMenuPlugin.FlySpeed != null) {
                 SandboxMenuPlugin.FlySpeed.Value = Mathf.RoundToInt(nextSpeed);
+            }
+
+        }
+
+        // --------------------------------------------------------- traversal --
+        private static void DrawTraversal(uint id) {
+
+            Widgets.Header(Texts.T("ПЕРЕМЕЩЕНИЕ", "TRAVERSAL"), Theme.HeaderRed);
+
+            bool jumps = CheatState.HasFlag(id, CheatFlag.InfiniteJumps);
+            bool nextJumps = Widgets.Toggle(jumps,
+                    Texts.T($"бесконечные прыжки (до {CheatPatches.MaxJumps})", $"infinite jumps (up to {CheatPatches.MaxJumps})"),
+                    Texts.T("лимит прыжков цели поднимается, пока включено; предметы на доп-прыжки работают как обычно",
+                            "the target's jump limit is raised while on; extra-jump items keep working"));
+
+            if (nextJumps != jumps) {
+                CheatActions.SetCheatFlag(CheatFlag.InfiniteJumps, nextJumps);
+            }
+
+        }
+
+        // ---------------------------------------------------------- overlays --
+        private static void DrawOverlays() {
+
+            Widgets.Header(Texts.T("ОВЕРЛЕИ (ЛОКАЛЬНО)", "OVERLAYS (LOCAL)"), Theme.HeaderRed,
+                    Texts.T("рисуются на твоей машине и работают без мода у хоста",
+                            "drawn on your machine, work even without the mod on the host"));
+
+            bool next = Widgets.Toggle(EspOverlay.Enabled,
+                    Texts.T("подсветка объектов (ESP)", "object overlay (ESP)"),
+                    Texts.T("маркеры телепорта, сундуков, алтарей и боссов с дистанцией",
+                            "markers for the teleporter, chests, shrines and bosses with distance"));
+
+            if (next != EspOverlay.Enabled) {
+                EspOverlay.Enabled = next;
             }
 
         }

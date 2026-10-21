@@ -145,6 +145,168 @@ namespace SandboxMenu {
 
         }
 
+        // ------------------------------------------------------- landmarks --
+        /// <summary>Виды ориентиров для TeleportLandmark (значения P1 запроса).</summary>
+        public const int KindTeleporter = 1;
+        public const int KindChest = 2;
+        public const int KindShrine = 3;
+        public const int KindBoss = 4;
+        public const int KindSpawn = 5;
+
+        /// <summary>Последний допустимый вид ориентира (для клампа протокола).</summary>
+        public const int LastLandmarkKind = KindSpawn;
+
+        /// <summary>Число слотов сохранённых точек.</summary>
+        public const int WaypointCount = 3;
+
+        /// <summary>
+        /// Точка помнит свою стадию: координаты чужой карты бессмысленны
+        /// (игрок упал бы в пустоту), поэтому перенос возможен только там,
+        /// где точка сохранена.
+        /// </summary>
+        private class Waypoint {
+
+            public string Scene;
+            public Vector3 Position;
+
+        }
+
+        private static readonly Waypoint[] Points = new Waypoint[WaypointCount];
+
+        /// <summary>Занят ли слот точки (для строки состояния вкладки).</summary>
+        public static bool HasWaypoint(int slot) {
+
+            return slot >= 1 && slot <= WaypointCount && Points[slot - 1] != null;
+
+        }
+
+        /// <summary>Имя стадии сохранённой точки или null, если слот пуст.</summary>
+        public static string WaypointScene(int slot) {
+
+            return HasWaypoint(slot) ? Points[slot - 1].Scene : null;
+
+        }
+
+        /// <summary>Перенести цель к ориентиру карты (телепорт, сундук, алтарь, босс, старт).</summary>
+        public static void TeleportLandmark(int kind) {
+
+            var t = Target;
+
+            if (Local) {
+                RunTeleportLandmark(t, kind);
+                return;
+            }
+
+            Send(new SandboxRequest {
+                Action = ActionCode.TeleportLandmark,
+                TargetNetId = TargetId(t),
+                P1 = kind
+            });
+
+        }
+
+        /// <summary>Запомнить позицию цели в слоте точек.</summary>
+        public static void WaypointSave(int slot) {
+
+            var t = Target;
+
+            if (Local) {
+                RunWaypointSave(t, slot);
+                return;
+            }
+
+            // позиции синхронизированы - зеркало сохраняется и на клиенте,
+            // чтобы строка состояния слота не врала до ответа сервера
+            TrySavePoint(t, slot);
+            Send(new SandboxRequest {
+                Action = ActionCode.WaypointSave,
+                TargetNetId = TargetId(t),
+                P1 = slot
+            });
+
+        }
+
+        /// <summary>Вернуть цель к сохранённой точке (только на её стадии).</summary>
+        public static void WaypointLoad(int slot) {
+
+            var t = Target;
+
+            if (Local) {
+                RunWaypointLoad(t, slot);
+                return;
+            }
+
+            Send(new SandboxRequest {
+                Action = ActionCode.WaypointLoad,
+                TargetNetId = TargetId(t),
+                P1 = slot
+            });
+
+        }
+
+        // --------------------------------------------------------- timescale --
+        /// <summary>Скорость игры в процентах (глобально, живёт на сервере).</summary>
+        public static void SetTimeScale(int pct) {
+
+            int clamped = CheatState.ClampPct(pct);
+
+            if (Local) {
+                RunSetTimeScale(clamped);
+                return;
+            }
+
+            CheatState.TimeScalePct = clamped;
+            Send(new SandboxRequest { Action = ActionCode.SetTimeScale, P1 = clamped });
+
+        }
+
+        private static bool _timeScaleForced;
+
+        /// <summary>
+        /// Каждый кадр из Plugin.Update: держим Time.timeScale, только пока
+        /// процент не равен 100 - иначе игра не могла бы сама управлять
+        /// замедлениями (катсцены, эффекты времени).
+        /// </summary>
+        internal static void ApplyTimeScaleFrame() {
+
+            if (!NetProtocol.IsServer || CheatState.TimeScalePct == CheatState.DefaultPct) {
+
+                if (_timeScaleForced) {
+
+                    Time.timeScale = 1f;
+                    _timeScaleForced = false;
+
+                }
+
+                return;
+
+            }
+
+            float target = CheatState.TimeScalePct / 100f;
+
+            if (Mathf.Abs(Time.timeScale - target) > 0.001f) {
+                Time.timeScale = target;
+            }
+
+            _timeScaleForced = true;
+
+        }
+
+        /// <summary>Вызов при выгрузке плагина: вернуть игре штатное время.</summary>
+        internal static void ShutdownTimeScale() {
+
+            try {
+
+                if (_timeScaleForced) {
+                    Time.timeScale = 1f;
+                }
+
+            } catch { /* best effort */ }
+
+            _timeScaleForced = false;
+
+        }
+
         // --------------------------------------------------------- dispatch --
         /// <summary>
         /// Серверное исполнение запросов забега. false - код не наш.
@@ -173,6 +335,18 @@ namespace SandboxMenu {
                     return true;
                 case ActionCode.TeleportPlayer:
                     RunTeleportPlayer(target, req.P1 != 0, (uint)req.P2);
+                    return true;
+                case ActionCode.TeleportLandmark:
+                    RunTeleportLandmark(target, req.P1);
+                    return true;
+                case ActionCode.WaypointSave:
+                    RunWaypointSave(target, req.P1);
+                    return true;
+                case ActionCode.WaypointLoad:
+                    RunWaypointLoad(target, req.P1);
+                    return true;
+                case ActionCode.SetTimeScale:
+                    RunSetTimeScale(req.P1);
                     return true;
                 default:
                     return false;
@@ -452,28 +626,345 @@ namespace SandboxMenu {
 
             }
 
+            if (MoveBody(fromBody, toBody.footPosition + Vector3.up * 0.5f)) {
+
+                GameApi.SayOk(Texts.T(
+                        $"телепорт: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}",
+                        $"teleport: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}"));
+
+            }
+
+        }
+
+        // -------------------------------------------------------- landmarks --
+        private static void RunTeleportLandmark(NetworkUser target, int kind) {
+
+            var body = BodyStrict(target);
+
+            if (body == null) {
+
+                GameApi.SayErr(Texts.T(
+                        "телепорт: у цели нет живого тела",
+                        "teleport: the target has no living body"));
+                return;
+
+            }
+
+            Vector3 origin = body.footPosition;
+            Vector3 destination;
+            string label;
+
+            if (!TryFindLandmark(kind, origin, out destination, out label)) {
+
+                GameApi.SayErr(Texts.T(
+                        "телепорт: ориентир не найден",
+                        "teleport: the landmark was not found"));
+                return;
+
+            }
+
+            if (MoveBody(body, destination)) {
+
+                GameApi.SayOk(Texts.T(
+                        $"телепорт: {PlayerTargets.DisplayName(target)} → {label}",
+                        $"teleport: {PlayerTargets.DisplayName(target)} → {label}"));
+
+            }
+
+        }
+
+        /// <summary>Поиск ориентира: точка в мире и короткая подпись для чата.</summary>
+        private static bool TryFindLandmark(int kind, Vector3 origin, out Vector3 destination, out string label) {
+
+            destination = Vector3.zero;
+            label = "";
+
             try {
 
-                var position = toBody.footPosition + Vector3.up * 0.5f;
-                // TeleportBodyArgs - obsolete-сообщение 2-аргументного оверлода
-                // обещает 4-аргументный, но реально в dll его нет: полный набор
-                // (forceOutOfVehicle, teleportMinions, resetStateMachines) живёт
-                // в структурных аргументах. Миньонов берём с собой: клоны меню
-                // не должны оставаться на старой стадии.
+                switch (kind) {
+
+                    case KindTeleporter: {
+
+                        var teleporter = TeleporterInteraction.instance;
+
+                        if (teleporter == null || teleporter.transform == null) {
+                            return false;
+                        }
+
+                        destination = teleporter.transform.position + Vector3.up * 2.5f;
+                        label = Texts.T("телепорт", "teleporter");
+                        return true;
+
+                    }
+
+                    case KindChest:
+                    case KindShrine:
+                        return NearestPurchase(kind == KindChest, origin, out destination, out label);
+
+                    case KindBoss:
+                        return NearestBoss(origin, out destination, out label);
+
+                    case KindSpawn: {
+
+                        var stage = Stage.instance;
+
+                        if (stage == null) {
+                            return false;
+                        }
+
+                        var spawn = stage.GetPlayerSpawnTransform();
+
+                        if (spawn == null) {
+                            return false;
+                        }
+
+                        destination = spawn.position;
+                        label = Texts.T("старт стадии", "stage spawn");
+                        return true;
+
+                    }
+
+                    default:
+                        return false;
+
+                }
+
+            } catch (Exception e) {
+
+                GameApi.WarnOnce("TryFindLandmark", e);
+                return false;
+
+            }
+
+        }
+
+        /// <summary>
+        /// Ближайший сундук (chests=true) или алтарь: ищем среди живых
+        /// PurchaseInteraction по компоненту-поведению. Прочие интерактивы
+        /// (дроны, нюта) не трогаем: единого признака «сюда стоит переносить»
+        /// у них нет.
+        /// </summary>
+        private static bool NearestPurchase(bool chests, Vector3 origin, out Vector3 destination, out string label) {
+
+            destination = Vector3.zero;
+            label = "";
+            float best = float.MaxValue;
+
+            foreach (var purchase in InstanceTracker.GetInstancesList<PurchaseInteraction>()) {
+
+                if (purchase == null || purchase.transform == null) {
+                    continue;
+                }
+
+                bool chest = purchase.GetComponent<ChestBehavior>() != null;
+                bool shrine = !chest && purchase.GetComponent<ShrineBehavior>() != null;
+
+                if (chests ? !chest : !shrine) {
+                    continue;
+                }
+
+                Vector3 position = purchase.transform.position;
+                float distance = (position - origin).sqrMagnitude;
+
+                if (distance >= best) {
+                    continue;
+                }
+
+                best = distance;
+                destination = position + Vector3.up * 1.5f;
+                label = chest
+                        ? Texts.T("сундук", "chest")
+                        : Texts.T("алтарь", "shrine");
+
+            }
+
+            return best < float.MaxValue;
+
+        }
+
+        private static bool NearestBoss(Vector3 origin, out Vector3 destination, out string label) {
+
+            destination = Vector3.zero;
+            label = "";
+            float best = float.MaxValue;
+
+            foreach (var body in CharacterBody.readOnlyInstancesList) {
+
+                if (body == null || !body.isBoss) {
+                    continue;
+                }
+
+                var health = body.healthComponent;
+
+                if (health == null || !health.alive) {
+                    continue;
+                }
+
+                var team = body.teamComponent;
+
+                if (team == null || team.teamIndex == TeamIndex.Player) {
+                    continue;
+                }
+
+                float distance = (body.footPosition - origin).sqrMagnitude;
+
+                if (distance >= best) {
+                    continue;
+                }
+
+                best = distance;
+                // не в самого босса, а в сторону от него: телепорт внутрь модели неприятен
+                destination = body.footPosition + new Vector3(5f, 1.5f, 0f);
+
+                try {
+                    label = body.GetDisplayName();
+                } catch {
+                    label = Texts.T("босс", "boss");
+                }
+
+            }
+
+            return best < float.MaxValue;
+
+        }
+
+        // --------------------------------------------------------- waypoints --
+        private static void RunWaypointSave(NetworkUser target, int slot) {
+
+            if (TrySavePoint(target, slot)) {
+
+                GameApi.SayOk(Texts.T($"точка {slot}: сохранена", $"waypoint {slot}: saved"));
+
+            } else {
+
+                GameApi.SayErr(Texts.T(
+                        $"точка {slot}: у цели нет позиции",
+                        $"waypoint {slot}: the target has no position"));
+
+            }
+
+        }
+
+        private static void RunWaypointLoad(NetworkUser target, int slot) {
+
+            if (!HasWaypoint(slot)) {
+
+                GameApi.SayErr(Texts.T($"точка {slot}: пуста", $"waypoint {slot}: empty"));
+                return;
+
+            }
+
+            var body = BodyStrict(target);
+
+            if (body == null) {
+
+                GameApi.SayErr(Texts.T(
+                        "телепорт: у цели нет живого тела",
+                        "teleport: the target has no living body"));
+                return;
+
+            }
+
+            var point = Points[slot - 1];
+
+            if (!string.Equals(point.Scene, CurrentSceneName(), StringComparison.Ordinal)) {
+
+                GameApi.SayErr(Texts.T(
+                        $"точка {slot}: сохранена на другой стадии",
+                        $"waypoint {slot}: saved on another stage"));
+                return;
+
+            }
+
+            if (MoveBody(body, point.Position + Vector3.up * 0.5f)) {
+
+                GameApi.SayOk(Texts.T($"точка {slot}: перенос выполнен", $"waypoint {slot}: warped"));
+
+            }
+
+        }
+
+        /// <summary>Запись точки без чата: используется и сервером, и зеркалом клиента.</summary>
+        private static bool TrySavePoint(NetworkUser target, int slot) {
+
+            if (slot < 1 || slot > WaypointCount) {
+                return false;
+            }
+
+            var body = BodyStrict(target);
+
+            if (body == null) {
+                return false;
+            }
+
+            Points[slot - 1] = new Waypoint {
+                Scene = CurrentSceneName(),
+                Position = body.footPosition
+            };
+
+            return true;
+
+        }
+
+        private static string CurrentSceneName() {
+
+            try {
+
+                var stage = Stage.instance;
+                var def = stage != null ? stage.sceneDef : null;
+
+                if (def != null && !string.IsNullOrEmpty(def.cachedName)) {
+                    return def.cachedName;
+                }
+
+            } catch (Exception e) {
+                GameApi.WarnOnce("CurrentSceneName", e);
+            }
+
+            return UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+        }
+
+        // ------------------------------------------------------------- shared --
+        /// <summary>
+        /// Перенос тела штатным TeleportBodyArgs (тот же набор флагов, что у
+        /// телепорта игроков): миньонов берём с собой, транспорт покидаем,
+        /// конечные автоматы не сбрасываем. 2-аргументный TeleportBody
+        /// помечен obsolete, а обещанного его сообщением 4-аргументного
+        /// оверлода в dll нет - полный набор живёт в структурных аргументах.
+        /// </summary>
+        private static bool MoveBody(CharacterBody body, Vector3 position) {
+
+            try {
+
                 TeleportHelper.TeleportBody(new TeleportHelper.TeleportBodyArgs {
-                    body = fromBody,
+                    body = body,
                     targetPosition = position,
                     forceOutOfVehicle = true,
                     teleportMinions = true,
                     resetStateMachines = false
                 });
-                GameApi.SayOk(Texts.T(
-                        $"телепорт: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}",
-                        $"teleport: {PlayerTargets.DisplayName(from)} → {PlayerTargets.DisplayName(to)}"));
+
+                return true;
 
             } catch (Exception e) {
-                GameApi.Warn("TeleportPlayer", e);
+
+                GameApi.Warn("MoveBody", e);
+                return false;
+
             }
+
+        }
+
+        // --------------------------------------------------------- timescale --
+        private static void RunSetTimeScale(int pct) {
+
+            int clamped = CheatState.ClampPct(pct);
+            CheatState.TimeScalePct = clamped;
+
+            GameApi.SayOk(Texts.T(
+                    $"забег: скорость игры = {GameApi.Val(clamped + "%")}",
+                    $"run: game speed = {GameApi.Val(clamped + "%")}"));
 
         }
 

@@ -103,6 +103,20 @@ namespace SandboxMenu.Tests
         }
 
         [Test]
+        public void ClampCount_MapTeleportAndTimeScale()
+        {
+            Assert.That(Protocol.ClampCount(ActionCode.TeleportLandmark, 0), Is.EqualTo(1),
+                    "нулевого ориентира нет - kinds начинаются с 1");
+            Assert.That(Protocol.ClampCount(ActionCode.TeleportLandmark, 99), Is.EqualTo(RunControl.LastLandmarkKind));
+            Assert.That(Protocol.ClampCount(ActionCode.WaypointSave, 0), Is.EqualTo(1));
+            Assert.That(Protocol.ClampCount(ActionCode.WaypointLoad, 77), Is.EqualTo(RunControl.WaypointCount));
+            Assert.That(Protocol.ClampCount(ActionCode.SetTimeScale, 0), Is.EqualTo(CheatState.MinPct));
+            Assert.That(Protocol.ClampCount(ActionCode.SetTimeScale, 100000), Is.EqualTo(CheatState.MaxPct));
+            Assert.That(Protocol.ClampCount(ActionCode.RespawnAs, 12345), Is.EqualTo(12345),
+                    "имя тела уходит полем Name, числа запрос не использует");
+        }
+
+        [Test]
         public void RateLimiter_AllowsWindowThenBlocks()
         {
             var rl = new RateLimiter();

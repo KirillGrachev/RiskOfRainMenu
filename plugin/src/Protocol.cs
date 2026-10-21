@@ -46,6 +46,11 @@ namespace SandboxMenu
         public const byte ChargeTeleporter = 37;
         public const byte SetArtifact = 38;
         public const byte TeleportPlayer = 39;
+        public const byte TeleportLandmark = 40;
+        public const byte WaypointSave = 41;
+        public const byte WaypointLoad = 42;
+        public const byte RespawnAs = 43;
+        public const byte SetTimeScale = 44;
     }
 
     /// <summary>
@@ -108,6 +113,13 @@ namespace SandboxMenu
                     return raw < 0 ? 0 : System.Math.Min(raw, CheatState.MaxTimerSeconds);
                 case ActionCode.FreezeTimer:
                     return raw != 0 ? 1 : 0;
+                case ActionCode.TeleportLandmark:
+                    return raw < 1 ? 1 : System.Math.Min(raw, RunControl.LastLandmarkKind);
+                case ActionCode.WaypointSave:
+                case ActionCode.WaypointLoad:
+                    return raw < 1 ? 1 : System.Math.Min(raw, RunControl.WaypointCount);
+                case ActionCode.SetTimeScale:
+                    return raw < CheatState.MinPct ? CheatState.MinPct : System.Math.Min(raw, CheatState.MaxPct);
                 // P1/P2 несут разный смысл (id флага и 0/1, id значения и проценты,
                 // индекс баффа и стаки): диапазон здесь не выручает, значения
                 // проверяет и клампает исполнитель на сервере (CheatState, RunGiveBuff)
@@ -117,6 +129,7 @@ namespace SandboxMenu
                 case ActionCode.SetArtifact:
                 case ActionCode.SetDifficulty:
                 case ActionCode.TeleportPlayer:
+                case ActionCode.RespawnAs:
                     return raw;
                 default:
                     return raw;

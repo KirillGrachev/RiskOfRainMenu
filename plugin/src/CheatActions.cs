@@ -248,6 +248,23 @@ namespace SandboxMenu {
 
         }
 
+        /// <summary>
+        /// Мгновенно сменить персонажа цели на префаб тела bodyName.
+        /// Заодно работает как воскрешение: Respawn поднимает и мёртвого мастера.
+        /// </summary>
+        public static void RespawnAs(string bodyName) {
+
+            var t = Target;
+
+            if (Local) {
+                RunRespawnAs(t, bodyName);
+                return;
+            }
+
+            Send(new SandboxRequest { Action = ActionCode.RespawnAs, TargetNetId = TargetId(t), Name = bodyName });
+
+        }
+
         // --------------------------------------------------------- dispatch --
         /// <summary>
         /// Серверное исполнение запросов трейнера. Возвращает false, если код
@@ -295,6 +312,9 @@ namespace SandboxMenu {
                     return true;
                 case ActionCode.GiveExperience:
                     RunGiveExperience(req.P1);
+                    return true;
+                case ActionCode.RespawnAs:
+                    RunRespawnAs(target, req.Name);
                     return true;
                 default:
                     return false;
@@ -366,6 +386,8 @@ namespace SandboxMenu {
                     return Texts.T("без перезарядки", "no cooldowns");
                 case CheatFlag.GodModeAll:
                     return Texts.T("бессмертие всех", "god mode for all");
+                case CheatFlag.InfiniteJumps:
+                    return Texts.T("бесконечные прыжки", "infinite jumps");
                 default:
                     return flag.ToString();
 
@@ -794,6 +816,85 @@ namespace SandboxMenu {
             } catch (Exception e) {
                 GameApi.Warn("GiveExperience", e);
             }
+
+        }
+
+        private static void RunRespawnAs(NetworkUser target, string bodyName) {
+
+            if (!NetProtocol.IsServer) {
+                return;
+            }
+
+            if (string.IsNullOrEmpty(bodyName)) {
+
+                GameApi.Warn("RespawnAs", new NotSupportedException("empty body name"));
+                return;
+
+            }
+
+            // имя приходит из сети - проверяем по каталогу тел, а не на глаз
+            GameObject prefab = null;
+
+            try {
+                prefab = BodyCatalog.FindBodyPrefab(bodyName);
+            } catch (Exception e) {
+                GameApi.WarnOnce("BodyCatalog.FindBodyPrefab", e);
+            }
+
+            if (prefab == null) {
+
+                GameApi.SayErr(Texts.T(
+                        "персонаж: тело не найдено в каталоге",
+                        "character: the body is not in the catalog") + $": {bodyName}");
+                return;
+
+            }
+
+            var master = MasterStrict(target);
+
+            if (master == null) {
+
+                GameApi.SayErr(Texts.T(
+                        "персонаж: у цели нет мастера",
+                        "character: the target has no master"));
+                return;
+
+            }
+
+            try {
+
+                master.Respawn(bodyName);
+                GameApi.SayOk(Texts.T(
+                        $"персонаж: {PlayerTargets.DisplayName(target)} → {GameApi.Val(bodyName)}",
+                        $"character: {PlayerTargets.DisplayName(target)} → {GameApi.Val(bodyName)}"));
+
+            } catch (Exception e) {
+                GameApi.Warn("RespawnAs", e);
+            }
+
+        }
+
+        /// <summary>
+        /// Мастер цели без фолбэка на локального игрока: смена персонажа
+        /// «ничьего» клиента не должна пересаживать хоста.
+        /// </summary>
+        private static CharacterMaster MasterStrict(NetworkUser nu) {
+
+            if (nu == null) {
+                return null;
+            }
+
+            try {
+
+                if (nu.master != null) {
+                    return nu.master;
+                }
+
+            } catch (Exception e) {
+                GameApi.WarnOnce("MasterStrict", e);
+            }
+
+            return null;
 
         }
 

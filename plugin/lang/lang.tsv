@@ -15,6 +15,7 @@ UserProfile.HasUnlockable возвращает true, пока включено	U
 WASD - движение по камере, Space/Ctrl - вверх/вниз, Shift - ускорение; проходит сквозь стены	WASD - camera-relative, Space/Ctrl - up/down, Shift - boost; passes through walls
 АРТЕФАКТЫ	ARTIFACTS
 Авто-число	Auto count
+Алтарь	Shrine
 БАФЫ	BUFFS
 ВРАГИ	ENEMIES
 Выдать	Give
@@ -29,6 +30,10 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 Заряд	Energized
 Зарядить мгновенно	Charge instantly
 Знамя	Warbanner
+К алтарю	To shrine
+К боссу	To boss
+К сундуку	To chest
+К телепорту	To teleporter
 КЛОНЫ	CLONES
 Кол-во	How many
 Команда	Team
@@ -36,11 +41,14 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 Меня к цели	Me to target
 Монеты	Coins
 Мощь	Might
+На старт стадии	To stage spawn
 ОБЪЕКТЫ СЦЕНЫ	STAGE PROPS
+ОВЕРЛЕИ (ЛОКАЛЬНО)	OVERLAYS (LOCAL)
 Обновить список	Refresh list
 Откат к бэкапу	Restore backup
 Открыть всё (в файл профиля)	Grant all (write to profile)
 Очистить инвентарь	Clear inventory
+ПЕРЕМЕЩЕНИЕ	TRAVERSAL
 ПЕРСОНАЖИ	CHARACTERS
 ПОЛЁТ (ЛОКАЛЬНО)	FLIGHT (LOCAL)
 ПРЕДМЕТЫ	ITEMS
@@ -54,23 +62,31 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 Радиус, м	Radius, m
 Раскол	Cloven
 СОСТОЯНИЕ	STATE
+СПАВН	SPAWN
 СТАДИИ	STAGES
+СЫГРАТЬ ЗА	PLAY AS
 Сброс в 0	Reset to 0
 Сбросить перезарядки	Reset cooldowns
 Скор. атаки, %	Attack speed, %
 Скор. бега, %	Move speed, %
 Скорость	Speed
+Скорость игры, %	Game speed, %
 Сложность	Difficulty
 Снять	Take
 Снять все бафы	Clear all buffs
 Спавн	Spawn
+Стать	Become
+Сундук	Chest
 ТАЙМЕР И СЛОЖНОСТЬ	TIMER AND DIFFICULTY
 ТЕЛЕПОРТ ИГРОКОВ	PLAYER TELEPORT
+ТЕЛЕПОРТ ПО КАРТЕ	MAP TELEPORT
 ТЕЛЕПОРТЕР	TELEPORTER
+ТОЧКИ	WAYPOINTS
 ТОЧНО выдать всё?	SURE to give all?
 ТОЧНО очистить?	SURE to clear?
 ТОЧНО убить?	SURE to kill?
 ТОЧНО? запись в сейв!	SURE? writes to the save!
+Телепорт	Teleporter
 УМЕНИЯ	SKILLS
 УРОН И СКОРОСТЬ	DAMAGE AND SPEED
 Убить врагов	Kill enemies
@@ -86,22 +102,29 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 Цель ко мне	Target to me
 ЧИТЫ	CHEATS
 ЭКОНОМИКА	ECONOMY
+алтарь	shrine
 артефакты	artifacts
 бафа нет в этой сборке игры	buff missing in this game build
 бафы	buffs
 без перезарядки	no cooldowns
 без перезарядки (умения и оборудование)	no cooldowns (skills and equipment)
+бесконечные прыжки	infinite jumps
 бессмертие	god mode
 бессмертие всех	god mode for all
 бессмертие всех игроков	god mode for all players
 бессмертие цели	target god mode
 бессмертие, урон, перезарядки, экономика, бафы - всё для выбранной цели	god mode, damage, cooldowns, economy, buffs - all for the selected target
+ближайший живой босс (в сторону от него)	the nearest living boss (offset to the side)
+ближайший к цели алтарь	the shrine nearest to the target
+ближайший к цели сундук	the chest nearest to the target
+босс	boss
 быстрые кнопки ищут баф по внутреннему имени и не ломаются от обновления каталога	quick buttons resolve buffs by internal name and survive catalog updates
 бэкапы	backups
 в этой сборке игры нет метода выдачи	this game build has no give method
 в этой сборке игры нет метода снятия	this game build has no remove method
 ваншот	one-hit kill
 вернуть профиль из последнего бэкапа, без перезапуска	restore the profile from the latest backup, live
+вернуть цель в точку (только на её стадии)	return the target to the point (only on its stage
 весь входящий урон цели отклоняется (включая падения)	all incoming damage to the target is rejected (falls included)
 весь дроп	all drops
 включаются и выключаются прямо во время забега	toggled live during the run
@@ -144,6 +167,7 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 закрыть меню	close menu
 заморозить таймер забега	freeze the run timer
 запись в файл сейва; обратима через откат	writes the save file; reversible via restore
+запомнить позицию цели	remember the target's position
 заряд	charge
 заряды всегда полны, оборудование готово сразу	stocks stay full, equipment recharges instantly
 заряжен	charged
@@ -167,7 +191,10 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 копировать loadout	copy loadout
 копировать предметы	copy items
 копия персонажа на его AI-master'е: модель, скиллы, предметы владельца	a copy on the character's AI master: model, skills, owner's items
+лимит прыжков цели поднимается, пока включено; предметы на доп-прыжки работают как обычно	the target's jump limit is raised while on; extra-jump items keep working
 любой урон цели-атакующего убивает с одного попадания	any hit from the target kills instantly
+маркеры телепорта, сундуков, алтарей и боссов с дистанцией	markers for the teleporter, chests, shrines and bosses with distance
+мгновенная смена персонажа цели; заодно воскрешает мёртвых	instantly rebody the target; doubles as a revive
 метод выдачи отклонил аргументы	give method rejected arguments
 метод снятия отклонил аргументы	remove method rejected arguments
 множители в процентах; 100 = без изменений	multipliers in percent; 100 = unchanged
@@ -197,16 +224,21 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 перед выдачей профиль автоматически снимается в бэкап	a backup is taken automatically before granting
 переместить выбранную цель к отправителю	move the selected target to the requester
 переместить отправителя к выбранной цели	move the requester to the selected target
+переносит выбранную цель; ориентир ищется на сервере среди живых объектов стадии	moves the selected target; the landmark is looked up on the server among the stage's live objects
 переход на любую стадию напрямую, минуя телепортер	jump to any stage directly, skipping the teleporter
 перечитать карты спавна сцены	re-read the stage spawn cards
 перечитать каталоги игры заново	re-read the game catalogs
 персонаж: префаб не найден	character: prefab not found
+персонаж: тело не найдено в каталоге	character: the body is not in the catalog
+персонаж: у цели нет мастера	character: the target has no master
 персонажи	masters
 пикапы	pickups
 по умолчанию: капли и пикапы в радиусе 15 м от цели	default: droplets and pickups within 15 m of the target
 погибшие клоны возвращаются	dead clones respawn
+подсветка объектов (ESP)	object overlay (ESP)
 предметы	items
 предметы: у цели нет инвентаря	items: target has no inventory
+призвать master-префаб рядом с целью	summon a master prefab near the target
 призвать рядом с целью	summon near the target
 профиль: бэкап не создан, выдача отменена	profile: backup failed, grant cancelled
 профиль: бэкап пустой	profile: backup is empty
@@ -214,11 +246,13 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 профиль: нет локального пользователя	profile: no local user
 профиль: нет локального профиля - зайди в игру	profile: no local profile - enter the game first
 профиль: откат не удался	profile: restore failed
+пусто	empty
 пять клонов сразу	spawn five now
 пять стаков бафа цели	five stacks of the buff to the target
 работает и на клиенте без мода у хоста: движение своего тела авторитетно у игрока	works on clients even without the mod on the host: own-body movement is player-authoritative
 разблокировок	unlockables
 разово заполнить заряды умений и сбросить оборудование цели	one-shot: refill skill stocks and reset the equipment of the target
+рисуются на твоей машине и работают без мода у хоста	drawn on your machine, work even without the mod on the host
 роль	role
 ру	en
 с	s
@@ -234,6 +268,7 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 сколько клонов игра держит сама: погибшие возвращаются, пока включено «держать число»; кнопки +1/+5 добавляют к этому числу	how many clones the game keeps: dead ones respawn while 'keep the count up' is on; +1/+5 add to this number
 скорость атаки	attack speed
 скорость движения	move speed
+скорость держится на сервере: симуляция всего мира идёт быстрее или медленнее	the scale lives on the server: the whole world simulation runs faster or slower
 скрыть служебные	hide hidden
 следовать за игроком	follow the player
 сложность	difficulty
@@ -242,17 +277,25 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 снять стопку с цели	take stacks from the target
 стадии	stages
 стадия	stage
+старт стадии	stage spawn
 стопка	stack
+сундук	chest
 сцена	stage
 таймер	timer
 таймер, сложность, стадии, телепортер, артефакты, телепорт игроков	timer, difficulty, stages, teleporter, artifacts, player teleport
+телепорт	teleporter
+телепорт текущей стадии	the stage teleporter
 телепорт: нет отправителя или цели	teleport: missing requester or target
+телепорт: ориентир не найден	teleport: the landmark was not found
 телепорт: у кого-то нет живого тела	teleport: someone has no living body
+телепорт: у цели нет живого тела	teleport: the target has no living body
 тело	body
 то же самое лежит в BepInEx/LogOutput.log	the same lines live in BepInEx/LogOutput.log
 то, что может заспавнить текущая сцена	whatever the current stage can spawn
 только союзные	ally-like only
+точка появления игроков	the player spawn point
 три по кругу	three in a ring
+три слота; точка помнит свою стадию и применяется только на ней	three slots; a point remembers its stage and only applies there
 у карты нет префаба	card has no prefab
 у цели нет инвентаря	target has no inventory
 у цели нет тела/master'а (нужен забег)	target has no body/master (enter a run)
@@ -266,6 +309,7 @@ WASD - движение по камере, Space/Ctrl - вверх/вниз, Shi
 установить деньги цели	set the money of the target
 установить лунные монеты игрока (валюта профиля)	set the lunar coins of the player (profile currency)
 установить уровень команды (в RoR2 уровень общий)	set the team level (levels are team-wide in RoR2)
+цель мгновенно становится этим выжившим	the target instantly becomes this survivor
 цель: 	target: 
 чит: баф не найден	cheat: buff not found
 чит: нет забега - TeamManager не найден	cheat: no run - TeamManager missing

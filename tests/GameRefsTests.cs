@@ -367,6 +367,57 @@ namespace SandboxMenu.Tests {
 
         }
 
+        /// <summary>Цели 2.1.0: прыжки, смена персонажа, ESP и телепорт по ориентирам.</summary>
+        [Test]
+        public void TraversalEspSwapTargets_ExistInGameAssemblies() {
+
+            var body = _game.GetType("RoR2.CharacterBody", true);
+            var master = _game.GetType("RoR2.CharacterMaster", true);
+            var bodyCatalog = _game.GetType("RoR2.BodyCatalog", true);
+            var survivorCatalog = _game.GetType("RoR2.SurvivorCatalog", true);
+            var survivorDef = _game.GetType("RoR2.SurvivorDef", true);
+            var instanceTracker = _game.GetType("RoR2.InstanceTracker", true);
+            var stage = _game.GetType("RoR2.Stage", true);
+            var health = _game.GetType("RoR2.HealthComponent", true);
+
+            Assert.That(AnyMethod(body, "get_maxJumpCount"), Is.Not.Null,
+                    "CharacterBody.get_maxJumpCount исчез из игры: патч прыжков не встанет");
+            Assert.That(InstanceField(body, "readOnlyInstancesList"), Is.Not.Null,
+                    "CharacterBody.readOnlyInstancesList исчез из игры: ESP не найдёт боссов");
+            Assert.That(InstanceProp(body, "isBoss"), Is.Not.Null,
+                    "CharacterBody.isBoss исчез из игры");
+            Assert.That(AnyMethod(body, "GetDisplayName"), Is.Not.Null,
+                    "CharacterBody.GetDisplayName исчез из игры: подписи боссов деградируют");
+            Assert.That(InstanceProp(health, "alive"), Is.Not.Null,
+                    "HealthComponent.alive исчез из игры");
+
+            Assert.That(Method(master, "Respawn", "String"), Is.Not.Null,
+                    "CharacterMaster.Respawn(string) исчез из игры: смена персонажа не работает");
+            Assert.That(AnyMethod(bodyCatalog, "FindBodyPrefab"), Is.Not.Null,
+                    "BodyCatalog.FindBodyPrefab исчез из игры: имя тела из сети нечем валидировать");
+
+            Assert.That(Member(survivorCatalog, "allSurvivorDefs") != null ||
+                        InstanceProp(survivorCatalog, "allSurvivorDefs") != null, Is.True,
+                    "SurvivorCatalog.allSurvivorDefs исчез из игры");
+            Assert.That(InstanceField(survivorDef, "bodyPrefab"), Is.Not.Null,
+                    "SurvivorDef.bodyPrefab исчез из игры");
+            Assert.That(InstanceField(survivorDef, "displayNameToken"), Is.Not.Null,
+                    "SurvivorDef.displayNameToken исчез из игры");
+
+            Assert.That(AnyMethod(instanceTracker, "GetInstancesList"), Is.Not.Null,
+                    "InstanceTracker.GetInstancesList исчез из игры: ESP и поиск ориентиров слепы");
+            Assert.That(_game.GetType("RoR2.PurchaseInteraction", true), Is.Not.Null,
+                    "PurchaseInteraction исчез из игры");
+            Assert.That(_game.GetType("RoR2.ChestBehavior", true), Is.Not.Null,
+                    "ChestBehavior исчез из игры");
+            Assert.That(_game.GetType("RoR2.ShrineBehavior", true), Is.Not.Null,
+                    "ShrineBehavior исчез из игры");
+
+            Assert.That(AnyMethod(stage, "GetPlayerSpawnTransform"), Is.Not.Null,
+                    "Stage.GetPlayerSpawnTransform исчез из игры: телепорт на старт стадии не работает");
+
+        }
+
         /// <summary>Поле экземпляра (публичное или нет) в объявлении типа.</summary>
         private static FieldInfo InstanceField(Type owner, string name) {
 

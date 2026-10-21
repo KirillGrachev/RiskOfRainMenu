@@ -23,6 +23,9 @@ namespace SandboxMenu {
         public static GUIStyle TabButton;
         public static GUIStyle Field;
 
+        /// <summary>Квадрат-маркер ESP-оверлея: белая плашка, цвет задаёт GUI.color.</summary>
+        public static GUIStyle EspBox;
+
         public static bool Ready { get; private set; }
 
         /// <summary>Создаёт все стили темы один раз; повторные вызовы бесплатны.</summary>
@@ -70,6 +73,12 @@ namespace SandboxMenu {
 
             Field = new GUIStyle(GUI.skin.textField);
             Field.fontSize = 12;
+
+            EspBox = new GUIStyle();
+            EspBox.normal.background = CreateTexture(1f, 1f, 1f, 1f);
+            EspBox.padding = new RectOffset(0, 0, 0, 0);
+            EspBox.margin = new RectOffset(0, 0, 0, 0);
+            EspBox.border = new RectOffset(0, 0, 0, 0);
 
         }
 

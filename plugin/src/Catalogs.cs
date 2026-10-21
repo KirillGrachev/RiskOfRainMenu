@@ -92,6 +92,15 @@ namespace SandboxMenu
             public ArtifactIndex Index;
         }
 
+        /// <summary>Запись списка выживших: имя и имя префаба тела.</summary>
+        public class SurvivorInfo
+        {
+            /// <summary>Локализованное имя для меню.</summary>
+            public string Name;
+            /// <summary>Имя префаба тела - ключ CharacterMaster.Respawn.</summary>
+            public string BodyName;
+        }
+
         /// <summary>Все мастер-префабы игры, отсортированы по имени.</summary>
         public static readonly List<MasterInfo> Masters = new List<MasterInfo>();
         /// <summary>Все предметы ItemCatalog, отсортированы по имени.</summary>
@@ -106,6 +115,8 @@ namespace SandboxMenu
         public static readonly List<StageInfo> Stages = new List<StageInfo>();
         /// <summary>Все артефакты ArtifactCatalog, отсортированы по имени.</summary>
         public static readonly List<ArtifactInfo> Artifacts = new List<ArtifactInfo>();
+        /// <summary>Все выжившие SurvivorCatalog, отсортированы по имени.</summary>
+        public static readonly List<SurvivorInfo> Survivors = new List<SurvivorInfo>();
 
         /// <summary>Каталоги построены хотя бы раз за сессию.</summary>
         public static bool Built;
@@ -129,6 +140,7 @@ namespace SandboxMenu
             Buffs.Clear();
             Stages.Clear();
             Artifacts.Clear();
+            Survivors.Clear();
             Built = false;
             CachedStage = null;
         }
@@ -171,11 +183,12 @@ namespace SandboxMenu
             BuildBuffs();
             BuildStages();
             BuildArtifacts();
+            BuildSurvivors();
             RefreshInteractables();
             Built = true;
             GameApi.Info($"catalogs built: masters={Masters.Count} items={Items.Count} " +
                          $"pickups={Pickups.Count} interactables={Interactables.Count} buffs={Buffs.Count} " +
-                         $"stages={Stages.Count} artifacts={Artifacts.Count}");
+                         $"stages={Stages.Count} artifacts={Artifacts.Count} survivors={Survivors.Count}");
         }
 
         private static void BuildMasters()
@@ -304,6 +317,28 @@ namespace SandboxMenu
                 Artifacts.Sort((x, y) => CompareByName(x.Name, y.Name));
             }
             catch (Exception e) { GameApi.Warn("BuildArtifacts", e); }
+        }
+
+        /// <summary>
+        /// Выжившие для мгновенной смены персонажа: ключ - имя префаба тела
+        /// (его принимает CharacterMaster.Respawn), подпись - из токена имени.
+        /// </summary>
+        private static void BuildSurvivors()
+        {
+            try
+            {
+                foreach (var def in SurvivorCatalog.allSurvivorDefs)
+                {
+                    if (def == null || def.bodyPrefab == null) continue;
+                    string bodyName = def.bodyPrefab.name;
+                    if (string.IsNullOrEmpty(bodyName)) continue;
+                    string name = GameApi.Localize(def.displayNameToken);
+                    if (string.IsNullOrEmpty(name) || name == def.displayNameToken) name = bodyName;
+                    Survivors.Add(new SurvivorInfo { Name = name, BodyName = bodyName });
+                }
+                Survivors.Sort((x, y) => CompareByName(x.Name, y.Name));
+            }
+            catch (Exception e) { GameApi.Warn("BuildSurvivors", e); }
         }
 
         /// Интерактивы берём из текущей стадии: их набор зависит от сцены.

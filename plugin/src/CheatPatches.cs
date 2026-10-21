@@ -15,7 +15,8 @@ namespace SandboxMenu {
     /// (снаряды, DoT'ы, падения, взрывы идут через неё). Множители скорости
     /// атаки и движения - postfix'ы на геттерах CharacterBody.attackSpeed и
     /// moveSpeed (в этой сборке статы read-only, сеттеры приватные): патч
-    /// геттера ловит все чтения игры - перезарядки, мотор, анимации.
+    /// геттера ловит все чтения игры - перезарядки, мотор, анимации. Тем же
+    /// приёмом поднимается лимит прыжков (get_maxJumpCount).
     ///
     /// Отсутствие перезарядки поддержано тиком (0.5 с из Plugin.Update),
     /// а не патчем: stock=maxStock и заполненный baseRechargeStopwatch -
@@ -194,6 +195,32 @@ namespace SandboxMenu {
 
         }
 
+        /// <summary>Потолок «бесконечных» прыжков: хватит на полёт, не хватит на лаг.</summary>
+        internal const int MaxJumps = 10;
+
+        /// <summary>
+        /// Поднятие лимита прыжков для postfix'а геттера maxJumpCount:
+        /// движок прыжков читает лимит через свойство, поэтому патч геттера
+        /// покрывает и обычные прыжки, и все предметы на доп-прыжки.
+        /// </summary>
+        internal static void RaiseJumpLimit(CharacterBody body, ref int result) {
+
+            if (!CheatState.AnyJumpTuning || body == null || result >= MaxJumps) {
+                return;
+            }
+
+            uint id = NetIdForBody(body);
+
+            if (id == 0u) {
+                return;
+            }
+
+            if (CheatState.HasFlag(id, CheatFlag.InfiniteJumps)) {
+                result = MaxJumps;
+            }
+
+        }
+
         // ---------------------------------------------------- no cooldowns ---
         /// <summary>
         /// Тик из Plugin.Update (0.5 с): держит заполненными заряды умений и
@@ -365,6 +392,26 @@ namespace SandboxMenu {
                 CheatPatches.MultiplySpeed(__instance, CheatValue.MoveSpeedPct, ref __result);
             } catch (Exception e) {
                 GameApi.WarnOnce("MoveSpeedCheatPatch", e);
+            }
+
+        }
+
+    }
+
+    /// <summary>
+    /// Патч геттера лимита прыжков: с флагом InfiniteJumps поднимает лимит
+    /// до <see cref="CheatPatches.MaxJumps"/>. Как и с скоростями, быстрый
+    /// выход по глобальному счётчику - патч дёргается на каждый прыжок.
+    /// </summary>
+    [HarmonyPatch(typeof(CharacterBody), "get_maxJumpCount")]
+    internal static class MaxJumpCountCheatPatch {
+
+        private static void Postfix(CharacterBody __instance, ref int __result) {
+
+            try {
+                CheatPatches.RaiseJumpLimit(__instance, ref __result);
+            } catch (Exception e) {
+                GameApi.WarnOnce("MaxJumpCountCheatPatch", e);
             }
 
         }
