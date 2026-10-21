@@ -144,6 +144,139 @@ namespace SandboxMenu.Tests {
 
         }
 
+        /// <summary>Цели чит-хуков: вход урона, поля DamageInfo, пересчёт статов.</summary>
+        [Test]
+        public void CheatHookTargets_ExistInGameAssembly() {
+
+            var health = _game.GetType("RoR2.HealthComponent", true);
+            var damageInfo = _game.GetType("RoR2.DamageInfo", true);
+            var body = _game.GetType("RoR2.CharacterBody", true);
+
+            Assert.That(Method(health, "TakeDamage", "DamageInfo"), Is.Not.Null,
+                    "HealthComponent.TakeDamage(DamageInfo) исчез из игры: хук бессмертия/ваншота встанет мимо");
+            Assert.That(Method(body, "get_attackSpeed"), Is.Not.Null,
+                    "CharacterBody.get_attackSpeed исчез из игры: множитель атаки встанет мимо");
+            Assert.That(Method(body, "get_moveSpeed"), Is.Not.Null,
+                    "CharacterBody.get_moveSpeed исчез из игры: множитель движения встанет мимо");
+
+            foreach (string fieldName in new[] { "damage", "attacker", "inflictor", "rejected", "position", "procCoefficient", "damageType" }) {
+                Assert.That(InstanceField(damageInfo, fieldName), Is.Not.Null,
+                        $"DamageInfo.{fieldName} исчез из игры");
+            }
+
+            Assert.That(InstanceField(health, "barrier"), Is.Not.Null, "HealthComponent.barrier исчез из игры");
+            Assert.That(InstanceProp(health, "combinedHealth"), Is.Not.Null, "HealthComponent.combinedHealth исчез из игры");
+            Assert.That(InstanceProp(health, "alive"), Is.Not.Null, "HealthComponent.alive исчез из игры");
+            Assert.That(InstanceProp(health, "fullHealth"), Is.Not.Null, "HealthComponent.fullHealth исчез из игры");
+            Assert.That(InstanceProp(health, "fullShield"), Is.Not.Null, "HealthComponent.fullShield исчез из игры");
+
+            Assert.That(WritableProp(health, "Networkhealth"), Is.Not.Null,
+                    "HealthComponent.Networkhealth (settable) исчез из игры: лечение не синхронизируется");
+            Assert.That(WritableProp(health, "Networkshield"), Is.Not.Null,
+                    "HealthComponent.Networkshield (settable) исчез из игры");
+
+            Assert.That(InstanceProp(body, "attackSpeed"), Is.Not.Null, "CharacterBody.attackSpeed исчез из игры");
+            Assert.That(InstanceProp(body, "moveSpeed"), Is.Not.Null, "CharacterBody.moveSpeed исчез из игры");
+
+        }
+
+        /// <summary>Сброс перезарядок: рычаги GenericSkill, приватные поля EquipmentSlot, Run.FixedTimeStamp.</summary>
+        [Test]
+        public void CooldownResetTargets_ExistInGameAssembly() {
+
+            var skill = _game.GetType("RoR2.GenericSkill", true);
+            var locator = _game.GetType("RoR2.SkillLocator", true);
+            var slot = _game.GetType("RoR2.EquipmentSlot", true);
+            var run = _game.GetType("RoR2.Run", true);
+
+            Assert.That(WritableProp(skill, "stock"), Is.Not.Null, "GenericSkill.stock (settable) исчез из игры");
+            Assert.That(WritableProp(skill, "maxStock"), Is.Not.Null, "GenericSkill.maxStock (settable) исчез из игры");
+            Assert.That(InstanceField(skill, "baseRechargeStopwatch"), Is.Not.Null,
+                    "GenericSkill.baseRechargeStopwatch исчез из игры");
+            Assert.That(AnyMethod(skill, "GetFinalRechargeInterval"), Is.Not.Null,
+                    "GenericSkill.GetFinalRechargeInterval исчез из игры");
+
+            foreach (string fieldName in new[] { "primary", "secondary", "utility", "special" }) {
+                Assert.That(InstanceField(locator, fieldName), Is.Not.Null,
+                        $"SkillLocator.{fieldName} исчез из игры");
+            }
+
+            Assert.That(InstanceField(slot, "_rechargeTime"), Is.Not.Null,
+                    "EquipmentSlot._rechargeTime исчез из игры: reflection-сброс оборудования пора обновлять");
+            Assert.That(InstanceField(slot, "subcooldownTimer"), Is.Not.Null,
+                    "EquipmentSlot.subcooldownTimer исчез из игры");
+
+            var timeStamp = run.GetNestedType("FixedTimeStamp", BindingFlags.Public | BindingFlags.NonPublic);
+            Assert.That(timeStamp, Is.Not.Null, "Run.FixedTimeStamp исчез из игры");
+            Assert.That(timeStamp.GetField("negativeInfinity", BindingFlags.Public | BindingFlags.Static), Is.Not.Null,
+                    "Run.FixedTimeStamp.negativeInfinity исчез из игры");
+
+        }
+
+        /// <summary>Экономика и бой: деньги, лунные монеты, уровень команды, бафы, перечисление врагов.</summary>
+        [Test]
+        public void EconomyAndCombatTargets_ExistInGameAssembly() {
+
+            var master = _game.GetType("RoR2.CharacterMaster", true);
+            var user = _game.GetType("RoR2.NetworkUser", true);
+            var team = _game.GetType("RoR2.TeamManager", true);
+            var body = _game.GetType("RoR2.CharacterBody", true);
+            var buffCatalog = _game.GetType("RoR2.BuffCatalog", true);
+            var tracker = _game.GetType("RoR2.InstanceTracker", true);
+
+            Assert.That(WritableProp(master, "money"), Is.Not.Null,
+                    "CharacterMaster.money (settable) исчез из игры: кошелёк игрока переехал");
+            Assert.That(AnyMethod(user, "AwardLunarCoins"), Is.Not.Null, "NetworkUser.AwardLunarCoins исчез из игры");
+            Assert.That(AnyMethod(user, "DeductLunarCoins"), Is.Not.Null, "NetworkUser.DeductLunarCoins исчез из игры");
+            Assert.That(InstanceProp(user, "lunarCoins"), Is.Not.Null, "NetworkUser.lunarCoins исчез из игры");
+
+            Assert.That(Member(team, "instance"), Is.Not.Null, "TeamManager.instance исчез из игры");
+            Assert.That(AnyMethod(team, "GiveTeamMoney"), Is.Not.Null, "TeamManager.GiveTeamMoney исчез из игры");
+            Assert.That(AnyMethod(team, "SetTeamLevel"), Is.Not.Null, "TeamManager.SetTeamLevel исчез из игры");
+            Assert.That(AnyMethod(team, "GiveTeamExperience"), Is.Not.Null, "TeamManager.GiveTeamExperience исчез из игры");
+            Assert.That(AnyMethod(team, "GetTeamLevel"), Is.Not.Null, "TeamManager.GetTeamLevel исчез из игры");
+            Assert.That(AnyMethod(team, "IsTeamEnemy"), Is.Not.Null, "TeamManager.IsTeamEnemy исчез из игры");
+
+            Assert.That(AnyMethod(body, "AddBuff"), Is.Not.Null, "CharacterBody.AddBuff исчез из игры");
+            Assert.That(AnyMethod(body, "RemoveBuff"), Is.Not.Null, "CharacterBody.RemoveBuff исчез из игры");
+            Assert.That(AnyMethod(body, "GetBuffCount"), Is.Not.Null, "CharacterBody.GetBuffCount исчез из игры");
+            Assert.That(Member(buffCatalog, "buffCount"), Is.Not.Null, "BuffCatalog.buffCount исчез из игры");
+            Assert.That(AnyMethod(buffCatalog, "GetBuffDef"), Is.Not.Null, "BuffCatalog.GetBuffDef исчез из игры");
+
+            Assert.That(AnyMethod(tracker, "GetInstancesList"), Is.Not.Null,
+                    "InstanceTracker.GetInstancesList исчез из игры: перечисление врагов сломается");
+
+        }
+
+        /// <summary>Поле экземпляра (публичное или нет) в объявлении типа.</summary>
+        private static FieldInfo InstanceField(Type owner, string name) {
+
+            return owner.GetField(name, BindingFlags.Public | BindingFlags.NonPublic
+                    | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
+
+        }
+
+        /// <summary>Свойство экземпляра в объявлении типа (без проверки сеттера).</summary>
+        private static PropertyInfo InstanceProp(Type owner, string name) {
+
+            return owner.GetProperty(name, BindingFlags.Public | BindingFlags.NonPublic
+                    | BindingFlags.Instance | BindingFlags.Static | BindingFlags.DeclaredOnly);
+
+        }
+
+        /// <summary>Свойство с публичным или приватным сеттером: плагины пишут в него.</summary>
+        private static PropertyInfo WritableProp(Type owner, string name) {
+
+            var property = InstanceProp(owner, name);
+
+            if (property == null || !property.CanWrite) {
+                return null;
+            }
+
+            return property;
+
+        }
+
         /// <summary>Ищет метод по имени и простым именам типов параметров (перегрузки).</summary>
         private static MethodInfo Method(Type owner, string name, params string[] parameterTypeNames) {
 

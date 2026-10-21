@@ -107,6 +107,29 @@ namespace SandboxMenu.Tests {
         }
 
         [Test]
+        public void AnySpeedTuning_TracksOnlySpeedMultipliers() {
+
+            Assert.That(CheatState.AnySpeedTuning, Is.False);
+
+            CheatState.SetValue(11u, CheatValue.DamagePct, 300);
+            Assert.That(CheatState.AnySpeedTuning, Is.False,
+                    "множитель урона не трогает геттеры скоростей");
+
+            CheatState.SetValue(11u, CheatValue.MoveSpeedPct, 200);
+            Assert.That(CheatState.AnySpeedTuning, Is.True);
+
+            CheatState.SetValue(11u, CheatValue.MoveSpeedPct, CheatState.DefaultPct);
+            Assert.That(CheatState.AnySpeedTuning, Is.False,
+                    "возврат к 100% гасит флаг быстрого пути");
+
+            CheatState.SetValue(22u, CheatValue.AttackSpeedPct, 150);
+            Assert.That(CheatState.AnySpeedTuning, Is.True);
+            CheatState.Forget(22u);
+            Assert.That(CheatState.AnySpeedTuning, Is.False, "Forget гасит флаг");
+
+        }
+
+        [Test]
         public void KnownIds_RejectGarbageFromNetwork() {
 
             Assert.That(CheatState.IsKnownFlag(1), Is.True);

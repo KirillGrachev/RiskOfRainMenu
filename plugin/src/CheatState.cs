@@ -204,6 +204,8 @@ namespace SandboxMenu {
                 map[value] = pct;
             }
 
+            RecountSpeedTuning();
+
         }
 
         /// <summary>Сколько игроков несут хотя бы один флаг (для вкладки «Инфо»).</summary>
@@ -248,11 +250,47 @@ namespace SandboxMenu {
 
         }
 
+        private static int _speedTuningCount;
+
+        /// <summary>
+        /// Есть ли хоть у кого-то множитель скорости (атаки или движения).
+        /// Флаг читается Harmony-postfix'ами геттеров CharacterBody каждый вызов:
+        /// без активных множителей патч выходит сразу, без резолва владельца.
+        /// </summary>
+        public static bool AnySpeedTuning {
+
+            get {
+                return _speedTuningCount > 0;
+            }
+
+        }
+
+        private static void RecountSpeedTuning() {
+
+            int count = 0;
+
+            foreach (var map in _values.Values) {
+
+                foreach (var pair in map) {
+
+                    if (pair.Key == CheatValue.AttackSpeedPct || pair.Key == CheatValue.MoveSpeedPct) {
+                        count++;
+                    }
+
+                }
+
+            }
+
+            _speedTuningCount = count;
+
+        }
+
         /// <summary>Забыть игрока (отключился): не копим мёртвые записи.</summary>
         public static void Forget(uint netId) {
 
             _flags.Remove(netId);
             _values.Remove(netId);
+            RecountSpeedTuning();
 
         }
 
@@ -263,6 +301,7 @@ namespace SandboxMenu {
             _values.Clear();
             GodModeAll = false;
             FreezeTimer = false;
+            RecountSpeedTuning();
 
         }
 

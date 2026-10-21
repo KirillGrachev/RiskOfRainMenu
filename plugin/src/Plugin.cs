@@ -96,6 +96,7 @@ namespace SandboxMenu
             _harmony = new Harmony(PluginInfo.Guid);
             _harmony.PatchAll(typeof(UnlockPatches));
             _harmony.PatchAll(typeof(DropHooks));
+            _harmony.PatchAll(typeof(CheatPatches));
             VerifyHarmonyTargets();
 
             Logger.LogInfo($"{PluginInfo.Name} {PluginInfo.Version} loaded. Menu key: {MenuKey.Value}");
@@ -124,6 +125,9 @@ namespace SandboxMenu
                 AccessTools.Method(typeof(UserProfile), "HasViewedViewable"),
                 AccessTools.Method(typeof(PickupDropletController), "OnEnable"),
                 AccessTools.Method(typeof(GenericPickupController), "OnEnable"),
+                AccessTools.Method(typeof(HealthComponent), "TakeDamage", new[] { typeof(DamageInfo) }),
+                AccessTools.PropertyGetter(typeof(CharacterBody), "attackSpeed"),
+                AccessTools.PropertyGetter(typeof(CharacterBody), "moveSpeed"),
             };
 
             var patched = new HashSet<MethodBase>();
@@ -147,6 +151,9 @@ namespace SandboxMenu
         /// <summary>Старт забега: язык загружен, снимаем каталоги начисто.</summary>
         private static void HandleRunStart(Run run)
         {
+            // чит-флаги прошлых забегов привязаны к мертвым netId - сбрасываем
+            try { CheatState.ResetRun(); }
+            catch (Exception e) { GameApi.WarnOnce("CheatState.ResetRun on run start", e); }
             try { Catalogs.BuildAll(); }
             catch (Exception e) { GameApi.WarnOnce("Catalogs.BuildAll on run start", e); }
         }
@@ -194,6 +201,8 @@ namespace SandboxMenu
                 catch (Exception e) { GameApi.WarnOnce("OwnerBinding.Tick", e); }
                 try { NetProtocol.Tick(); }
                 catch (Exception e) { GameApi.WarnOnce("NetProtocol.Tick", e); }
+                try { CheatPatches.MaintainContinuous(); }
+                catch (Exception e) { GameApi.WarnOnce("CheatPatches.MaintainContinuous", e); }
             }
         }
 

@@ -54,6 +54,14 @@ namespace SandboxMenu
             Send(new SandboxRequest { Action = ActionCode.ClearItems, TargetNetId = TargetId(t) });
         }
 
+        /// <summary>Выдать цели по N штук каждого нескрытого предмета каталога.</summary>
+        public static void GiveAllItems(int count)
+        {
+            var t = Target;
+            if (Local) { RunGiveAllItems(t, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.GiveAllItems, TargetNetId = TargetId(t), P1 = count });
+        }
+
         // -------------------------------------------------------------- drops --
         /// <summary>Выбросить N пикапов у цели.</summary>
         public static void DropPickup(PickupIndex index, int count)
@@ -190,6 +198,9 @@ namespace SandboxMenu
                 case ActionCode.ClearItems:
                     RunClearItems(target);
                     break;
+                case ActionCode.GiveAllItems:
+                    RunGiveAllItems(target, req.P1);
+                    break;
                 case ActionCode.DropPickup:
                 {
                     RunDropPickup(target, new PickupIndex(req.P1), req.P2);
@@ -242,6 +253,9 @@ namespace SandboxMenu
                     CloneManager.KeepAlive = req.P1 != 0;
                     break;
                 default:
+                    // коды трейнера (читы, экономика) исполняет CheatActions;
+                    // будущие диспетчеры забега подключаются той же цепочкой
+                    if (CheatActions.TryExecute(req, target)) break;
                     GameApi.Warn("ExecuteRequest", new System.NotSupportedException("action " + req.Action));
                     break;
             }
@@ -285,6 +299,35 @@ namespace SandboxMenu
             GameApi.SayOk(Texts.T(
                 $"предметы: инвентарь {PlayerTargets.DisplayName(target)} очищен ({n} поз.)",
                 $"items: inventory of {PlayerTargets.DisplayName(target)} cleared ({n} entries)"));
+        }
+
+        private static void RunGiveAllItems(NetworkUser target, int count)
+        {
+            var inv = Spawning.InventoryOf(target);
+            if (inv == null)
+            {
+                GameApi.SayErr(Texts.T("предметы: у цели нет инвентаря", "items: target has no inventory"));
+                return;
+            }
+            int given = 0, failed = 0;
+            foreach (var item in Catalogs.Items)
+            {
+                if (item.Hidden) continue;
+                if (Spawning.GiveItemTo(inv, item.Index, count)) given++;
+                else failed++;
+            }
+            if (failed == 0)
+            {
+                GameApi.SayOk(Texts.T(
+                    $"предметы: выдано {given} видов по {count}×",
+                    $"items: gave {given} kinds x{count}"));
+            }
+            else
+            {
+                GameApi.SayErr(Texts.T(
+                    $"предметы: выдано {given} видов по {count}×, ошибок {failed}",
+                    $"items: gave {given} kinds x{count}, failed {failed}"));
+            }
         }
 
         private static void RunDropPickup(NetworkUser target, PickupIndex index, int count)
