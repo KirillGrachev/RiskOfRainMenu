@@ -54,7 +54,8 @@ namespace UnityEngine.Networking
     public class NetworkClient
     {
         public static List<NetworkClient> allClients { get { return null; } }
-        public bool active { get { return false; } }
+        // static, as in the real com.unity.multiplayer-hlapi.Runtime assembly
+        public static bool active { get { return false; } }
         public void RegisterHandler(short msgType, NetworkMessageDelegate handler) { }
         public void UnregisterHandler(short msgType) { }
         public bool Send(short msgType, MessageBase msg) { return false; }

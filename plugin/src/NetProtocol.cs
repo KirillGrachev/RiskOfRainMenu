@@ -198,7 +198,9 @@ namespace SandboxMenu
                 }
 
                 var nm = NetworkManagerSystem.singleton;
-                bool clientAlive = nm != null && nm.client != null && nm.client.active;
+                // NetworkClient.active в игровой сборке hlapi статический
+                // (instance-доступ не компилируется против com.unity.multiplayer-hlapi.Runtime)
+                bool clientAlive = nm != null && nm.client != null && NetworkClient.active;
                 if (!clientAlive && _clientRegistered) OnClientStop();
 
                 if (_clientRegistered && !_serverRegistered)
@@ -264,7 +266,7 @@ namespace SandboxMenu
                 var nm = NetworkManagerSystem.singleton;
                 if (nm == null) return null;
                 var client = nm.client;
-                if (client == null || !client.active) return null;
+                if (client == null || !NetworkClient.active) return null;
                 return client;
             }
             catch (Exception e)
