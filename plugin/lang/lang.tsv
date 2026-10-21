@@ -1,49 +1,110 @@
 # RoR2 Sandbox Menu localization: russian<TAB>english.
 # Edit the values to reword either language; they override the built-in pairs.
  (ты)	 (you)
+(включая Eclipse)	(Eclipse included)
+(вся карта)	(whole map)
 (нет)	(none)
++скорость атаки на короткое время	+attack speed for a short time
++урон и скорость атаки от знамён войны	+damage and attack speed from war banners
++урон на короткое время	+damage for a short time
 ItemCatalog: выдать, снять или сбросить стопку цели	ItemCatalog: give, remove or drop stacks to the target
 MasterCatalog: выжившие, монстры, дроны, боссы	MasterCatalog: survivors, monsters, drones, bosses
 PickupCatalog: предметы, оборудование, артефакты, дроны, монеты	PickupCatalog: items, equipment, artifacts, drones, coins
 UserProfile.HasSurvivorUnlocked возвращает true	UserProfile.HasSurvivorUnlocked returns true
 UserProfile.HasUnlockable возвращает true, пока включено	UserProfile.HasUnlockable returns true while on
+WASD - движение по камере, Space/Ctrl - вверх/вниз, Shift - ускорение; проходит сквозь стены	WASD - camera-relative, Space/Ctrl - up/down, Shift - boost; passes through walls
+АРТЕФАКТЫ	ARTIFACTS
 Авто-число	Auto count
+БАФЫ	BUFFS
+ВРАГИ	ENEMIES
 Выдать	Give
+Выдать всё	Give all
 ДРОП	DROPS
+Деньги	Money
+Добавить	Give
 Дроп	Drop
+ЖИВУЧЕСТЬ	SURVIVABILITY
+ЗАБЕГ	RUN
+Задать	Set
+Заряд	Energized
+Зарядить мгновенно	Charge instantly
+Знамя	Warbanner
 КЛОНЫ	CLONES
 Кол-во	How many
 Команда	Team
 МЕНЮ	MENU
+Меня к цели	Me to target
+Монеты	Coins
+Мощь	Might
 ОБЪЕКТЫ СЦЕНЫ	STAGE PROPS
 Обновить список	Refresh list
 Откат к бэкапу	Restore backup
 Открыть всё (в файл профиля)	Grant all (write to profile)
 Очистить инвентарь	Clear inventory
 ПЕРСОНАЖИ	CHARACTERS
+ПОЛЁТ (ЛОКАЛЬНО)	FLIGHT (LOCAL)
 ПРЕДМЕТЫ	ITEMS
 ПРЕДУПРЕЖДЕНИЯ	WARNINGS
 ПРОФИЛЬ	PROFILE
+Перейти	Go
 Пересобрать каталоги	Rebuild catalogs
 Поиск	Search
+Полное лечение	Full heal
 РАЗБЛОКИРОВКИ	UNLOCKS
+Радиус, м	Radius, m
+Раскол	Cloven
 СОСТОЯНИЕ	STATE
+СТАДИИ	STAGES
+Сброс в 0	Reset to 0
+Сбросить перезарядки	Reset cooldowns
+Скор. атаки, %	Attack speed, %
+Скор. бега, %	Move speed, %
+Скорость	Speed
+Сложность	Difficulty
 Снять	Take
+Снять все бафы	Clear all buffs
 Спавн	Spawn
+ТАЙМЕР И СЛОЖНОСТЬ	TIMER AND DIFFICULTY
+ТЕЛЕПОРТ ИГРОКОВ	PLAYER TELEPORT
+ТЕЛЕПОРТЕР	TELEPORTER
+ТОЧНО выдать всё?	SURE to give all?
 ТОЧНО очистить?	SURE to clear?
+ТОЧНО убить?	SURE to kill?
 ТОЧНО? запись в сейв!	SURE? writes to the save!
+УМЕНИЯ	SKILLS
+УРОН И СКОРОСТЬ	DAMAGE AND SPEED
+Убить врагов	Kill enemies
 Убрать всех	Remove all
 Убрать дроп рядом	Clear drops nearby
 Убрать заспавненные	Remove spawned
 Убрать модели-призраки	Remove ghost models
 Убрать моих	Remove mine
 Убрать призванных	Remove spawned
+Уровень	Level
+Урон, %	Damage, %
 Цель	Target
+Цель ко мне	Target to me
+ЧИТЫ	CHEATS
+ЭКОНОМИКА	ECONOMY
+артефакты	artifacts
+бафа нет в этой сборке игры	buff missing in this game build
+бафы	buffs
+без перезарядки	no cooldowns
+без перезарядки (умения и оборудование)	no cooldowns (skills and equipment)
+бессмертие	god mode
+бессмертие всех	god mode for all
+бессмертие всех игроков	god mode for all players
+бессмертие цели	target god mode
+бессмертие, урон, перезарядки, экономика, бафы - всё для выбранной цели	god mode, damage, cooldowns, economy, buffs - all for the selected target
+быстрые кнопки ищут баф по внутреннему имени и не ломаются от обновления каталога	quick buttons resolve buffs by internal name and survive catalog updates
 бэкапы	backups
 в этой сборке игры нет метода выдачи	this game build has no give method
 в этой сборке игры нет метода снятия	this game build has no remove method
+ваншот	one-hit kill
 вернуть профиль из последнего бэкапа, без перезапуска	restore the profile from the latest backup, live
+весь входящий урон цели отклоняется (включая падения)	all incoming damage to the target is rejected (falls included)
 весь дроп	all drops
+включаются и выключаются прямо во время забега	toggled live during the run
 владелец: 	owner: 
 все выжившие	all survivors
 все капли и лежащие пикапы в мире	every droplet and lying pickup in the world
@@ -51,21 +112,43 @@ UserProfile.HasUnlockable возвращает true, пока включено	U
 всё просмотрено	all viewables seen
 выбросить пикапом в мир	throw into the world as a pickup
 выбросить у цели	throw at the target
+выдать стопку каждого нескрытого предмета каталога	give a stack of every non-hidden catalog item
 выкл - клоны стоят охраной на месте	off - clones hold position
 галочки не трогают файл сейва	toggles do not touch the save file
+глобальный флаг: действует на каждого игрока команды	global flag: applies to every player of the team
 да	yes
 действия мира недоступны: мод нужен и хосту	world actions unavailable: the host needs the mod too
+деньги	money
 держать число (респавн)	keep the count up
 для этого тела нет AI-master'а: клон без AI может не двигаться	no AI master for this body: the clone may not move
+добавить деньги цели	add money to the target
+добавить команде 10 000 опыта	give the team 10,000 experience
+добавить лунные монеты игроку	add lunar coins to the player
+добавить минуту к таймеру	add a minute to the timer
 добавить стопку цели	add stacks to the target
+добить всех враждебных существ (нейтралы не трогаются); убийство засчитывается цели	finish off every hostile creature (neutrals untouched); kills are credited to the target
+довести заряд телепортера текущей стадии до конца	fill the charge of the current stage's teleporter
 доубить тела без master'а: наследие старых удалений	finish off bodies without a master: leftovers of old removes
 дроны, турели, жуки - фильтр по имени префаба	drones, turrets, beetles - prefab name filter
 дроп меню	menu drops
 дроп не создан	no droplet created
 забег	run
+забег: артефакт не найден	run: artifact not found
+забег: в этой сборке игры заряд телепортера недоступен	run: teleporter charge is not writable in this game build
+забег: имя сцены пусто	run: scene name is empty
+забег: на стадии нет телепортера	run: this stage has no teleporter
+забег: сцена не найдена	run: scene not found
+забег: телепортер заряжен мгновенно	run: teleporter charged instantly
+забег: телепортер не в режиме зарядки	run: teleporter is not in charging mode
+забега нет	no active run
 закрыть меню	close menu
+заморозить таймер забега	freeze the run timer
 запись в файл сейва; обратима через откат	writes the save file; reversible via restore
+заряд	charge
+заряды всегда полны, оборудование готово сразу	stocks stay full, equipment recharges instantly
+заряжен	charged
 заспавнено	spawned
+здоровье, щит и барьер цели - до максимума	health, shield and barrier of the target - to the maximum
 зеркало спавна: удалить объекты меню	mirror of spawn: remove the menu's props
 зеркало спавна: уничтожить призванных меню	mirror of spawn: kill everything the menu summoned
 игрок	player
@@ -84,19 +167,37 @@ UserProfile.HasUnlockable возвращает true, пока включено	U
 копировать loadout	copy loadout
 копировать предметы	copy items
 копия персонажа на его AI-master'е: модель, скиллы, предметы владельца	a copy on the character's AI master: model, skills, owner's items
+любой урон цели-атакующего убивает с одного попадания	any hit from the target kills instantly
 метод выдачи отклонил аргументы	give method rejected arguments
 метод снятия отклонил аргументы	remove method rejected arguments
+множители в процентах; 100 = без изменений	multipliers in percent; 100 = unchanged
+монеты	coins
+на стадии нет телепортера	no teleporter on this stage
+на шаг проще	one step easier
+на шаг сложнее	one step harder
 не выбран игрок	no target player selected
 не найден master-префаб персонажа	could not resolve a master prefab
 некорректный индекс пикапа	invalid pickup index
+немедленно перейти на стадию (вся команда)	advance to the stage immediately (whole team)
 нет	none
 нет забега	no run
+нет забега - артефакты недоступны	no run - artifacts unavailable
+нет забега - действие недоступно	no run - action unavailable
+нет забега: управление доступно после старта	no run: controls unlock once a run starts
 нет сервера - хост или одиночная игра	not a server - host or play single player
+нет сетевой цели: читы игрока доступны в забеге	no network target: player cheats need an active run
 нет соединения с сервером: действие не отправлено	no server connection: action not sent
+обнулить таймер забега	zero the run timer
 объект: карта не найдена	prop: card not found
 объекты	props
 один объект у цели	one prop at the target
+один стак бафа цели	one stack of the buff to the target
+ожидает активации	idle
+отмотать таймер на минуту	rewind the timer by a minute
 перед выдачей профиль автоматически снимается в бэкап	a backup is taken automatically before granting
+переместить выбранную цель к отправителю	move the selected target to the requester
+переместить отправителя к выбранной цели	move the requester to the selected target
+переход на любую стадию напрямую, минуя телепортер	jump to any stage directly, skipping the teleporter
 перечитать карты спавна сцены	re-read the stage spawn cards
 перечитать каталоги игры заново	re-read the game catalogs
 персонаж: префаб не найден	character: prefab not found
@@ -105,6 +206,7 @@ UserProfile.HasUnlockable возвращает true, пока включено	U
 по умолчанию: капли и пикапы в радиусе 15 м от цели	default: droplets and pickups within 15 m of the target
 погибшие клоны возвращаются	dead clones respawn
 предметы	items
+предметы: у цели нет инвентаря	items: target has no inventory
 призвать рядом с целью	summon near the target
 профиль: бэкап не создан, выдача отменена	profile: backup failed, grant cancelled
 профиль: бэкап пустой	profile: backup is empty
@@ -113,22 +215,39 @@ UserProfile.HasUnlockable возвращает true, пока включено	U
 профиль: нет локального профиля - зайди в игру	profile: no local profile - enter the game first
 профиль: откат не удался	profile: restore failed
 пять клонов сразу	spawn five now
+пять стаков бафа цели	five stacks of the buff to the target
+работает и на клиенте без мода у хоста: движение своего тела авторитетно у игрока	works on clients even without the mod on the host: own-body movement is player-authoritative
 разблокировок	unlockables
+разово заполнить заряды умений и сбросить оборудование цели	one-shot: refill skill stocks and reset the equipment of the target
 роль	role
 ру	en
+с	s
+с множителями	tuned
+с флагами	flagged
 сбросить поиск	clear search
 свернуть/развернуть	collapse/expand
+свободный полёт	free flight
 сводка раз в секунду	refreshed once per second
 сервер	server
 скинов	skins
 скины и варианты скиллов владельца	owner's skins and skill variants
 сколько клонов игра держит сама: погибшие возвращаются, пока включено «держать число»; кнопки +1/+5 добавляют к этому числу	how many clones the game keeps: dead ones respawn while 'keep the count up' is on; +1/+5 add to this number
+скорость атаки	attack speed
+скорость движения	move speed
 скрыть служебные	hide hidden
 следовать за игроком	follow the player
+сложность	difficulty
+сложность перестаёт расти со временем; существа на карте не трогаются	difficulty stops growing with time; world spawns untouched
 снять все предметы цели	remove every item of the target
 снять стопку с цели	take stacks from the target
+стадии	stages
+стадия	stage
 стопка	stack
 сцена	stage
+таймер	timer
+таймер, сложность, стадии, телепортер, артефакты, телепорт игроков	timer, difficulty, stages, teleporter, artifacts, player teleport
+телепорт: нет отправителя или цели	teleport: missing requester or target
+телепорт: у кого-то нет живого тела	teleport: someone has no living body
 тело	body
 то же самое лежит в BepInEx/LogOutput.log	the same lines live in BepInEx/LogOutput.log
 то, что может заспавнить текущая сцена	whatever the current stage can spawn
@@ -137,7 +256,23 @@ UserProfile.HasUnlockable возвращает true, пока включено	U
 у карты нет префаба	card has no prefab
 у цели нет инвентаря	target has no inventory
 у цели нет тела/master'а (нужен забег)	target has no body/master (enter a run)
+убийство врагов	kill enemies
 убирает метки «new» в меню игры	removes 'new' markers in game menus
+убрать с цели все бафы и дебафы	remove every buff and debuff from the target
 удалить клонов всех игроков	remove every player's clones
 удалить клонов цели: тело и master	remove the target's clones: body and master
-
+уровень	level
+урон	damage
+установить деньги цели	set the money of the target
+установить лунные монеты игрока (валюта профиля)	set the lunar coins of the player (profile currency)
+установить уровень команды (в RoR2 уровень общий)	set the team level (levels are team-wide in RoR2)
+цель: 	target: 
+чит: баф не найден	cheat: buff not found
+чит: нет забега - TeamManager не найден	cheat: no run - TeamManager missing
+чит: нет цели	cheat: no target
+чит: полёт включён (WASD, Space/Ctrl, Shift)	cheat: flight enabled (WASD, Space/Ctrl, Shift)
+чит: у цели нет живого тела	cheat: target has no living body
+чит: у цели нет мастера	cheat: target has no master
+чит: у цели нет тела	cheat: target has no body
+читы	cheats
+эффект расколотой сферы	cloven hooves-like effect

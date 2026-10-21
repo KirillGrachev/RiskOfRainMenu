@@ -90,12 +90,73 @@ namespace SandboxMenu {
                     Texts.T("предметы", "items") + $": {Catalogs.Items.Count}\n" +
                     Texts.T("пикапы", "pickups") + $": {Catalogs.Pickups.Count}   " +
                     Texts.T("объекты", "props") + $": {Catalogs.Interactables.Count}\n" +
+                    Texts.T("бафы", "buffs") + $": {Catalogs.Buffs.Count}   " +
+                    Texts.T("стадии", "stages") + $": {Catalogs.Stages.Count}   " +
+                    Texts.T("артефакты", "artifacts") + $": {Catalogs.Artifacts.Count}\n" +
                     Texts.T("разблокировок", "unlockables") + $": {UnlockPatches.UnlockableCount}   " +
                     Texts.T("скинов", "skins") + $": {UnlockPatches.SkinCount}\n" +
                     Texts.T("клоны", "clones") + $": {CloneManager.AliveTotal}   " +
                     Texts.T("заспавнено", "spawned") + $": {SpawnRegistry.MasterCount}/{SpawnRegistry.PropCount}\n" +
                     Texts.T("игроки", "players") + $": {PlayerTargets.Count}   " +
-                    Texts.T("бэкапы", "backups") + $": {UnlockPatches.Backups().Count}";
+                    Texts.T("бэкапы", "backups") + $": {UnlockPatches.Backups().Count}\n" +
+                    BuildRunLine() + "\n" +
+                    BuildCheatLine();
+
+        }
+
+        /// <summary>Строка забега: деньги цели, уровень команды, таймер.</summary>
+        private static string BuildRunLine() {
+
+            string money = "-", level = "-", timer = "-";
+
+            try {
+
+                var master = PlayerTargets.Master;
+
+                if (master != null) {
+                    money = master.money.ToString();
+                }
+
+                if (TeamManager.instance != null) {
+                    level = TeamManager.instance.GetTeamLevel(TeamIndex.Player).ToString();
+                }
+
+                var run = Run.instance;
+
+                if (run != null) {
+                    timer = RunControl.FormatTime(run.GetRunStopwatch());
+                }
+
+            } catch (System.Exception e) {
+                GameApi.WarnOnce("InfoTab.BuildRunLine", e);
+            }
+
+            return Texts.T("деньги", "money") + $": {money}   " +
+                    Texts.T("уровень", "level") + $": {level}   " +
+                    Texts.T("таймер", "timer") + $": {timer}";
+
+        }
+
+        /// <summary>Строка активных читов: сколько игроков с флагами и множителями.</summary>
+        private static string BuildCheatLine() {
+
+            string line = Texts.T("читы", "cheats") + $": {CheatState.FlaggedPlayerCount} " +
+                    Texts.T("с флагами", "flagged") + $", {CheatState.TunedPlayerCount} " +
+                    Texts.T("с множителями", "tuned");
+
+            if (CheatState.GodModeAll) {
+                line += "   [god-all]";
+            }
+
+            if (CheatState.FreezeTimer) {
+                line += "   [freeze]";
+            }
+
+            if (FlyController.Enabled) {
+                line += "   [fly]";
+            }
+
+            return line;
 
         }
     }

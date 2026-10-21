@@ -13,6 +13,7 @@ namespace SandboxMenu {
         private static int _count = 1;
         private static bool _hideHidden = true;
         private static float _clearArmUntil;
+        private static float _giveAllArmUntil;
 
         /// <summary>Отрисовка вкладки; вызывается оболочкой окна.</summary>
         public static void Draw() {
@@ -31,6 +32,26 @@ namespace SandboxMenu {
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal();
+                bool armedAll = Time.unscaledTime < _giveAllArmUntil;
+                string allLabel = armedAll
+                        ? Texts.T("ТОЧНО выдать всё?", "SURE to give all?")
+                        : Texts.T("Выдать всё", "Give all");
+
+                if (Widgets.Button(allLabel, 150f,
+                        Texts.T("выдать стопку каждого нескрытого предмета каталога",
+                                "give a stack of every non-hidden catalog item"))) {
+
+                    if (!armedAll) {
+                        _giveAllArmUntil = Time.unscaledTime + 4f;
+                    } else {
+
+                        _giveAllArmUntil = 0f;
+                        SandboxActions.GiveAllItems(_count);
+
+                    }
+
+                }
+
                 bool armed = Time.unscaledTime < _clearArmUntil;
                 string label = armed
                         ? Texts.T("ТОЧНО очистить?", "SURE to clear?")
