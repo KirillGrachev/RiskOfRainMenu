@@ -64,6 +64,8 @@ jobs:
           New-Item -ItemType Directory -Force -Path game-managed/bepinex | Out-Null
           Copy-Item (Join-Path $managed "RoR2.dll") game-managed/
           Copy-Item (Join-Path $managed "com.unity.multiplayer-hlapi.Runtime.dll") game-managed/ -ErrorAction SilentlyContinue
+          # полёт (FlyController) компилируется против KinematicCharacterMotor
+          Copy-Item (Join-Path $managed "KinematicCharacterController.dll") game-managed/ -ErrorAction SilentlyContinue
 
           $bex = Join-Path (Split-Path (Split-Path $managed)) "BepInEx\core"
           if (Test-Path $bex) { Copy-Item "$bex\*.dll" game-managed/bepinex/ }
@@ -123,10 +125,12 @@ jobs:
                       os.makedirs("game-managed/bepinex", exist_ok=True)
                       with z.open(n) as src, open(f"game-managed/bepinex/{fn}", "wb") as dst:
                           shutil.copyfileobj(src, dst)
-              hl = find("com.unity.multiplayer-hlapi.Runtime.dll")
-              if hl:
-                  with z.open(hl) as src, open("game-managed/" + os.path.basename(hl), "wb") as dst:
-                      shutil.copyfileobj(src, dst)
+              for extra in ("com.unity.multiplayer-hlapi.Runtime.dll",
+                            "KinematicCharacterController.dll"):
+                  n = find(extra)
+                  if n:
+                      with z.open(n) as src, open("game-managed/" + os.path.basename(n), "wb") as dst:
+                          shutil.copyfileobj(src, dst)
           if not os.path.exists("game-managed/bepinex/BepInEx.dll"):
               raise SystemExit("bepinex/BepInEx.dll not found inside the archive")
           print("unpacked:", sorted(os.listdir("game-managed")))
@@ -184,10 +188,12 @@ jobs:
                       os.makedirs("game-managed/bepinex", exist_ok=True)
                       with z.open(n) as src, open(f"game-managed/bepinex/{fn}", "wb") as dst:
                           shutil.copyfileobj(src, dst)
-              hl = find("com.unity.multiplayer-hlapi.Runtime.dll")
-              if hl:
-                  with z.open(hl) as src, open("game-managed/" + os.path.basename(hl), "wb") as dst:
-                      shutil.copyfileobj(src, dst)
+              for extra in ("com.unity.multiplayer-hlapi.Runtime.dll",
+                            "KinematicCharacterController.dll"):
+                  n = find(extra)
+                  if n:
+                      with z.open(n) as src, open("game-managed/" + os.path.basename(n), "wb") as dst:
+                          shutil.copyfileobj(src, dst)
           if not os.path.exists("game-managed/bepinex/BepInEx.dll"):
               raise SystemExit("bepinex/BepInEx.dll not found inside the archive")
           print("unpacked:", sorted(os.listdir("game-managed")))
