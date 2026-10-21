@@ -40,6 +40,7 @@ namespace SandboxMenu
         internal static ConfigEntry<bool> MenuCollapsed;
         internal static ConfigEntry<int> MenuX;
         internal static ConfigEntry<int> MenuY;
+        internal static ConfigEntry<float> FlySpeed;
 
         /// <summary>Инстанс для сохранения конфига из статических классов меню.</summary>
         internal static SandboxMenuPlugin Self;
@@ -70,6 +71,8 @@ namespace SandboxMenu
                 "Remembered window position X.");
             MenuY = Config.Bind("General", "LastY", 60,
                 "Remembered window position Y.");
+            FlySpeed = Config.Bind("Cheats", "FlySpeed", 20f,
+                "Free-flight speed in meters per second (Shift gives x3). Range 5..100 in the menu.");
             CloneRespawnDelay = Config.Bind("Clone", "RespawnDelaySeconds", 5,
                 "Pause before respawning a clone that died (0 = instantly).");
             CloneFollowDefault = Config.Bind("Clone", "FollowByDefault", true,
@@ -106,6 +109,7 @@ namespace SandboxMenu
         {
             try { Run.onRunStartGlobal -= HandleRunStart; } catch { /* best effort */ }
             try { Stage.onStageStartGlobal -= HandleStageStart; } catch { /* best effort */ }
+            try { FlyController.Shutdown(); } catch { /* best effort */ }
             try { MenuUI.PersistState(); } catch { /* best effort */ }
             try { if (_harmony != null) _harmony.UnpatchSelf(); } catch { /* best effort */ }
         }
@@ -181,6 +185,10 @@ namespace SandboxMenu
             {
                 GameApi.WarnOnce("Update/key", e);
             }
+
+            // полёт читает ввод и двигает тело каждый кадр - вне аккумулятора
+            try { FlyController.Tick(); }
+            catch (Exception e) { GameApi.WarnOnce("FlyController.Tick", e); }
 
             // поддержку клонов и привязку миньонов не обязательно считать каждый кадр
             _updateAccumulator += Time.unscaledDeltaTime;

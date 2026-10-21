@@ -321,6 +321,40 @@ namespace SandboxMenu.Tests {
 
         }
 
+        /// <summary>Цели свободного полёта: мотор RoR2 и KinematicCharacterMotor из соседней сборки.</summary>
+        [Test]
+        public void FlightTargets_ExistInGameAssemblies() {
+
+            var motor = _game.GetType("RoR2.CharacterMotor", true);
+
+            Assert.That(InstanceField(motor, "gravityMultiplier"), Is.Not.Null,
+                    "CharacterMotor.gravityMultiplier исчез из игры: полёт не сможет гасить гравитацию");
+
+            string refsDir = Environment.GetEnvironmentVariable("GAME_REFS_DIR");
+            string kcmPath = string.IsNullOrEmpty(refsDir)
+                    ? null
+                    : Path.Combine(refsDir, "KinematicCharacterController.dll");
+
+            if (kcmPath == null || !File.Exists(kcmPath)) {
+
+                Assert.Ignore("KinematicCharacterController.dll не найден в GAME_REFS_DIR: проверки мотора полёта пропущены");
+                return;
+
+            }
+
+            var kcmAssembly = _context.LoadFromAssemblyPath(kcmPath);
+            var baseController = kcmAssembly.GetType("KinematicCharacterController.BaseCharacterController", true);
+            var kcm = kcmAssembly.GetType("KinematicCharacterController.KinematicCharacterMotor", true);
+
+            Assert.That(WritableProp(baseController, "Motor"), Is.Not.Null,
+                    "BaseCharacterController.Motor исчез из игры: полёт не дотянется до мотора");
+            Assert.That(Method(kcm, "SetPosition", "Vector3", "Boolean"), Is.Not.Null,
+                    "KinematicCharacterMotor.SetPosition(Vector3, bool) исчез из игры");
+            Assert.That(InstanceField(kcm, "BaseVelocity"), Is.Not.Null,
+                    "KinematicCharacterMotor.BaseVelocity исчез из игры: скорость полёта не обнуляется");
+
+        }
+
         /// <summary>Поле экземпляра (публичное или нет) в объявлении типа.</summary>
         private static FieldInfo InstanceField(Type owner, string name) {
 

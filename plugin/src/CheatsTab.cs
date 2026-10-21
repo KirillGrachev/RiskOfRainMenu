@@ -64,6 +64,8 @@ namespace SandboxMenu {
             DrawEconomy(target);
             GUILayout.Space(2f);
             DrawBuffs();
+            GUILayout.Space(2f);
+            DrawFlight();
 
         }
 
@@ -467,6 +469,50 @@ namespace SandboxMenu {
                 GameApi.WarnOnce($"FindBuffIndex({internalName})", e);
                 return -1;
 
+            }
+
+        }
+
+        // ----------------------------------------------------------- flight --
+        private static void DrawFlight() {
+
+            Widgets.Header(Texts.T("ПОЛЁТ (ЛОКАЛЬНО)", "FLIGHT (LOCAL)"), Theme.HeaderRed,
+                    Texts.T("работает и на клиенте без мода у хоста: движение своего тела авторитетно у игрока",
+                            "works on clients even without the mod on the host: own-body movement is player-authoritative"));
+
+            bool next = Widgets.Toggle(FlyController.Enabled,
+                    Texts.T("свободный полёт", "free flight"),
+                    Texts.T("WASD - движение по камере, Space/Ctrl - вверх/вниз, Shift - ускорение; проходит сквозь стены",
+                            "WASD - camera-relative, Space/Ctrl - up/down, Shift - boost; passes through walls"));
+
+            if (next != FlyController.Enabled) {
+
+                FlyController.Enabled = next;
+
+                if (next) {
+
+                    GameApi.SayOk(Texts.T(
+                            "чит: полёт включён (WASD, Space/Ctrl, Shift)",
+                            "cheat: flight enabled (WASD, Space/Ctrl, Shift)"));
+
+                }
+
+            }
+
+            GUILayout.BeginHorizontal();
+
+                GUILayout.Label(Texts.T("Скорость", "Speed"), Theme.Name,
+                        GUILayout.Width(Widgets.LabelColumn), GUILayout.Height(Widgets.RowHeight));
+                float current = SandboxMenuPlugin.FlySpeed != null ? SandboxMenuPlugin.FlySpeed.Value : 20f;
+                float nextSpeed = GUILayout.HorizontalSlider(current, 5f, 100f,
+                        GUILayout.Width(200f), GUILayout.Height(Widgets.RowHeight));
+                GUILayout.Label(Mathf.RoundToInt(nextSpeed).ToString(), Theme.Name,
+                        GUILayout.Width(30f), GUILayout.Height(Widgets.RowHeight));
+
+            GUILayout.EndHorizontal();
+
+            if (Mathf.Abs(nextSpeed - current) > 0.5f && SandboxMenuPlugin.FlySpeed != null) {
+                SandboxMenuPlugin.FlySpeed.Value = Mathf.RoundToInt(nextSpeed);
             }
 
         }

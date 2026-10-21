@@ -108,6 +108,12 @@
       <HintPath>$(RoR2ManagedDir)/RoR2.dll</HintPath>
       <Private>false</Private>
     </Reference>
+    <!-- KinematicCharacterMotor: свободный полёт двигает тело через
+         BaseCharacterController.Motor.SetPosition (FlyController). -->
+    <Reference Include="KinematicCharacterController">
+      <HintPath>$(RoR2ManagedDir)/KinematicCharacterController.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
   </ItemGroup>
 
 </Project>
