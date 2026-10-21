@@ -25,6 +25,27 @@ namespace SandboxMenu
         public const byte CleanupOrphans = 16;
         public const byte ClearDropsNear = 17;
         public const byte ClearMenuDrops = 18;
+        public const byte GiveAllItems = 19;
+        public const byte SetCheatFlag = 20;
+        public const byte SetCheatValue = 21;
+        public const byte HealTarget = 22;
+        public const byte KillEnemies = 23;
+        public const byte ResetCooldowns = 24;
+        public const byte GiveBuff = 25;
+        public const byte ClearBuffs = 26;
+        public const byte SetMoney = 27;
+        public const byte GiveMoney = 28;
+        public const byte SetLunarCoins = 29;
+        public const byte GiveLunarCoins = 30;
+        public const byte SetTeamLevel = 31;
+        public const byte GiveExperience = 32;
+        public const byte FreezeTimer = 33;
+        public const byte SetTimer = 34;
+        public const byte SetDifficulty = 35;
+        public const byte TeleportStage = 36;
+        public const byte ChargeTeleporter = 37;
+        public const byte SetArtifact = 38;
+        public const byte TeleportPlayer = 39;
     }
 
     /// <summary>
@@ -57,6 +78,7 @@ namespace SandboxMenu
             {
                 case ActionCode.GiveItem:
                 case ActionCode.RemoveItem:
+                case ActionCode.GiveAllItems:
                     max = 500;
                     break;
                 case ActionCode.DropPickup:
@@ -69,6 +91,33 @@ namespace SandboxMenu
                 case ActionCode.CloneSpawnNow:
                     max = 20;
                     break;
+                // чит-действия с «нулевым» значением в диапазоне: ноль осмыслен
+                // (радиус 0 = вся карта, таймер 0, деньги 0), поэтому не прижимаем к 1
+                case ActionCode.KillEnemies:
+                    return raw < 0 ? 0 : System.Math.Min(raw, CheatState.MaxKillRadius);
+                case ActionCode.SetMoney:
+                case ActionCode.GiveMoney:
+                case ActionCode.SetLunarCoins:
+                case ActionCode.GiveLunarCoins:
+                    return raw < 0 ? 0 : System.Math.Min(raw, CheatState.MaxMoney);
+                case ActionCode.SetTeamLevel:
+                    return raw < 1 ? 1 : System.Math.Min(raw, CheatState.MaxLevel);
+                case ActionCode.GiveExperience:
+                    return raw < 0 ? 0 : System.Math.Min(raw, CheatState.MaxExperience);
+                case ActionCode.SetTimer:
+                    return raw < 0 ? 0 : System.Math.Min(raw, CheatState.MaxTimerSeconds);
+                case ActionCode.FreezeTimer:
+                    return raw != 0 ? 1 : 0;
+                // P1/P2 несут разный смысл (id флага и 0/1, id значения и проценты,
+                // индекс баффа и стаки): диапазон здесь не выручает, значения
+                // проверяет и клампает исполнитель на сервере (CheatState, RunGiveBuff)
+                case ActionCode.SetCheatFlag:
+                case ActionCode.SetCheatValue:
+                case ActionCode.GiveBuff:
+                case ActionCode.SetArtifact:
+                case ActionCode.SetDifficulty:
+                case ActionCode.TeleportPlayer:
+                    return raw;
                 default:
                     return raw;
             }

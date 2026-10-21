@@ -72,6 +72,37 @@ namespace SandboxMenu.Tests
         }
 
         [Test]
+        public void ClampCount_CheatActionsAllowMeaningfulZero()
+        {
+            // ноль осмыслен: радиус 0 = вся карта, деньги/таймер 0
+            Assert.That(Protocol.ClampCount(ActionCode.KillEnemies, 0), Is.EqualTo(0));
+            Assert.That(Protocol.ClampCount(ActionCode.KillEnemies, -5), Is.EqualTo(0));
+            Assert.That(Protocol.ClampCount(ActionCode.KillEnemies, 99999), Is.EqualTo(CheatState.MaxKillRadius));
+            Assert.That(Protocol.ClampCount(ActionCode.SetMoney, 0), Is.EqualTo(0));
+            Assert.That(Protocol.ClampCount(ActionCode.GiveMoney, 100000000), Is.EqualTo(CheatState.MaxMoney));
+            Assert.That(Protocol.ClampCount(ActionCode.SetLunarCoins, -1), Is.EqualTo(0));
+            Assert.That(Protocol.ClampCount(ActionCode.SetTimer, 0), Is.EqualTo(0));
+            Assert.That(Protocol.ClampCount(ActionCode.SetTimer, 99999999), Is.EqualTo(CheatState.MaxTimerSeconds));
+            Assert.That(Protocol.ClampCount(ActionCode.SetTeamLevel, 0), Is.EqualTo(1), "уровень 0 не бывает");
+            Assert.That(Protocol.ClampCount(ActionCode.SetTeamLevel, 5000), Is.EqualTo(CheatState.MaxLevel));
+            Assert.That(Protocol.ClampCount(ActionCode.GiveExperience, 999999999), Is.EqualTo(CheatState.MaxExperience));
+            Assert.That(Protocol.ClampCount(ActionCode.FreezeTimer, 5), Is.EqualTo(1));
+            Assert.That(Protocol.ClampCount(ActionCode.FreezeTimer, 0), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ClampCount_DualMeaningParamsPassThrough()
+        {
+            // P1/P2 несут разный смысл (id и значение): клампает исполнитель на сервере
+            Assert.That(Protocol.ClampCount(ActionCode.SetCheatValue, 100000), Is.EqualTo(100000));
+            Assert.That(Protocol.ClampCount(ActionCode.GiveBuff, 777), Is.EqualTo(777));
+            Assert.That(Protocol.ClampCount(ActionCode.SetArtifact, 42), Is.EqualTo(42));
+            Assert.That(Protocol.ClampCount(ActionCode.TeleportPlayer, 1), Is.EqualTo(1));
+            Assert.That(CheatState.ClampPct(100000), Is.EqualTo(CheatState.MaxPct),
+                    "исполнитель клампает проценты сам");
+        }
+
+        [Test]
         public void RateLimiter_AllowsWindowThenBlocks()
         {
             var rl = new RateLimiter();
