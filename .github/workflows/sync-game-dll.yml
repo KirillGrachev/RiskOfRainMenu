@@ -151,26 +151,53 @@ jobs:
 
   sync-draft:
     name: Download refs.zip from the draft release game-refs
-    # Черновой релиз не виден публике, поэтому игровая сборка не публикуется:
-    # asset refs.zip скачивается токеном самого workflow (contents: read).
+    # Черновой релиз не виден публике, поэтому игровая сборка не публикуется.
+    # ВАЖНО: contents: write, а не read. GitHub отдаёт черновики релизов только
+    # identities с push-доступом («Only users with push access will receive
+    # listings for draft releases» - docs.github.com/rest/releases/releases),
+    # а GITHUB_TOKEN с contents: read push-доступа не имеет: список релизов
+    # приходит без черновиков, шаг падает с «черновой релиз не найден», даже
+    # если он создан правильно. Скачивание asset'а черновика требует того же.
     if: github.event.inputs.source == 'draft'
     runs-on: ubuntu-24.04
     permissions:
-      contents: read
+      contents: write
     steps:
       - name: Download and unpack
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          set -e
+          set -eo pipefail
           mkdir -p game-managed
-          ASSET_URL=$(gh api "repos/${{ github.repository }}/releases" \
-                      --jq '.[] | select(.draft == true) | .assets[] | select(.name == "refs.zip") | .url' | head -n 1)
+
+          # один запрос, дальше работаем с локальной копией ответа
+          gh api --paginate "repos/${{ github.repository }}/releases" > releases.json
+
+          # диагностика: что вообще видно токену (черновик должен быть в списке)
+          jq -r '.[] | "release: tag=\(.tag_name) draft=\(.draft) assets=[\(.assets | map(.name) | join(" "))]"' releases.json
+          echo "drafts seen: $(jq '[.[] | select(.draft == true)] | length' releases.json)"
+
+          ASSET_URL=$(jq -r '[.[] | select(.draft == true) | .assets[]
+                              | select(.name == "refs.zip") | select(.state == "uploaded")
+                              | .url][0] // empty' releases.json)
           if [ -z "$ASSET_URL" ]; then
-            echo "::error::Черновой релиз с asset refs.zip не найден: Releases -> Draft a new release (tag game-refs, НЕ публиковать) -> приложить refs.zip."
+            echo "::error::Черновой релиз с asset refs.zip не найден."
+            echo "Чек-лист:"
+            echo "  1) релиз сохранён как DRAFT (кнопка «Save draft», НЕ «Publish release»);"
+            echo "  2) файл приложен к этому черновику и называется ровно refs.zip (state=uploaded);"
+            echo "  3) черновик создан в ${{ github.repository }}, а не в форке;"
+            echo "  4) у job'а sync-draft стоит permissions: contents: write - с contents: read"
+            echo "     GitHub не показывает workflow-токену черновые релизы (см. комментарий выше)."
+            if [ "$(jq '[.[] | select(.draft == true) | .assets[]
+                        | select(.name == "refs.zip" and .state != "uploaded")] | length' releases.json)" != "0" ]; then
+              echo "::warning::refs.zip в черновике есть, но ещё не дозагружен (state != uploaded) - дождитесь окончания загрузки."
+            fi
             exit 1
           fi
-          curl -sSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/octet-stream" -o refs.zip "$ASSET_URL"
+          echo "asset url: $ASSET_URL"
+
+          curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -H "Accept: application/octet-stream" -o refs.zip "$ASSET_URL"
+          rm -f releases.json
           python3 - <<'PY'
           import zipfile, os, shutil
           with zipfile.ZipFile("refs.zip") as z:
