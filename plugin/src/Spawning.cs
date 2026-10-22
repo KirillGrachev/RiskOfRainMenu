@@ -107,7 +107,6 @@ namespace SandboxMenu
             return master;
         }
 
-        // ------------------------------------------------------------- items --
         private static MethodInfo[] _giveChain;
         private static MethodInfo[] _removeChain;
         private static MethodInfo _stackReader;
@@ -261,7 +260,6 @@ namespace SandboxMenu
             return removed;
         }
 
-        // ------------------------------------------------------------- drops --
         /// <summary>Дроп появляется у цели, а не у того, кто нажал кнопку.</summary>
         public static bool DropPickup(PickupIndex index, int count, NetworkUser target)
         {
@@ -335,7 +333,6 @@ namespace SandboxMenu
             return SpawnRegistry.RemoveDropsNear(origin, radius);
         }
 
-        // ----------------------------------------------------- interactables --
         /// <summary>
         /// Повторяет InteractableSpawnCard.Spawn (RID 16240): Instantiate ->
         /// прижать к полу, если orientToFloor -> NetworkServer.Spawn. Случайный
@@ -376,7 +373,6 @@ namespace SandboxMenu
             }
         }
 
-        // -------------------------------------------------------------- kill --
         /// <summary>
         /// Полное удаление персонажа: тело (модель) и master вместе. Уничтожение
         /// одного master'а оставляло осиротевшее тело - висящую модель без логики.

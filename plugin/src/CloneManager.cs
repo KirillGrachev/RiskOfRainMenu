@@ -89,7 +89,6 @@ namespace SandboxMenu
             }
         }
 
-        // ------------------------------------------------------- per target --
         /// <summary>Группа владельца; create=false возвращает null, если её нет.</summary>
         private static Group GroupFor(NetworkUser owner, bool create)
         {
@@ -214,7 +213,6 @@ namespace SandboxMenu
             }
         }
 
-        // ------------------------------------------------------------ maintain
         /// <summary>Вызывается из Plugin.Update раз в 0.5 с.</summary>
         public static void Maintain()
         {
@@ -301,7 +299,6 @@ namespace SandboxMenu
             return cfg != null ? Mathf.Max(0f, cfg.Value) : 5f;
         }
 
-        // ------------------------------------------------------------- manual --
         /// <summary>
         /// Мгновенный спавн для игрока. Кнопки честно поднимают Desired, поэтому
         /// слайдер, автореспавн и ручной спавн не спорят друг с другом (раньше
@@ -380,7 +377,6 @@ namespace SandboxMenu
             if (announce) GameApi.SayOk(Texts.T("клоны: убраны клоны игрока", "clones: removed for this player"));
         }
 
-        // ------------------------------------------------------------- spawn --
         /// <summary>
         /// Префаб клона: игровой путь (AI-master тела), запасной - master игрока
         /// по имени (без AI: клон может не двигаться, о чём меню скажет отдельно).

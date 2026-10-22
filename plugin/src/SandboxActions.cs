@@ -29,7 +29,6 @@ namespace SandboxMenu
             return PlayerTargets.NetIdOf(target);
         }
 
-        // -------------------------------------------------------------- items --
         /// <summary>Выдать N стаков предмета цели.</summary>
         public static void GiveItem(ItemIndex index, int count)
         {
@@ -62,7 +61,6 @@ namespace SandboxMenu
             Send(new SandboxRequest { Action = ActionCode.GiveAllItems, TargetNetId = TargetId(t), P1 = count });
         }
 
-        // -------------------------------------------------------------- drops --
         /// <summary>Выбросить N пикапов у цели.</summary>
         public static void DropPickup(PickupIndex index, int count)
         {
@@ -93,7 +91,6 @@ namespace SandboxMenu
             Send(new SandboxRequest { Action = ActionCode.ClearMenuDrops });
         }
 
-        // --------------------------------------------------------- characters --
         /// <summary>Призвать N персонажей префаба на команде team рядом с целью.</summary>
         public static void SpawnMaster(GameObject prefab, string name, TeamIndex team, int count)
         {
@@ -116,7 +113,6 @@ namespace SandboxMenu
             Send(new SandboxRequest { Action = ActionCode.CleanupOrphans });
         }
 
-        // -------------------------------------------------------------- props --
         /// <summary>Заспавнить N объектов сцены (сундуки, автоматы, алтари) у цели.</summary>
         public static void SpawnProp(SpawnCard card, string name, int count)
         {
@@ -132,7 +128,6 @@ namespace SandboxMenu
             Send(new SandboxRequest { Action = ActionCode.RemoveSpawnedProps });
         }
 
-        // -------------------------------------------------------------- clones --
         /// <summary>Задать желаемую численность клонов цели.</summary>
         public static void CloneSetDesired(int value)
         {
@@ -180,7 +175,6 @@ namespace SandboxMenu
             Send(new SandboxRequest { Action = ActionCode.CloneSetKeepAlive, P1 = value ? 1 : 0 });
         }
 
-        // ---------------------------------------------------- server execution --
         /// <summary>
         /// Диспетчер запросов на сервере: исполняет действие от имени target.
         /// Вызывается только из <see cref="NetProtocol"/>.
@@ -262,7 +256,6 @@ namespace SandboxMenu
             }
         }
 
-        // --------------------------------------------------------- run bodies --
         private static void RunGiveItem(NetworkUser target, ItemIndex index, int count)
         {
             var inv = Spawning.InventoryOf(target);
@@ -443,7 +436,6 @@ namespace SandboxMenu
             GameApi.SayOk(Texts.T($"объекты: убрано {n} заспавненных", $"removed {n} spawned props"));
         }
 
-        // -------------------------------------------------------------- misc --
         /// <summary>Отправить запрос или пожаловаться, что канал недоступен.</summary>
         private static void Send(SandboxRequest req)
         {

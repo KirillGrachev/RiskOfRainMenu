@@ -120,7 +120,6 @@ namespace SandboxMenu
             return arr;
         }
 
-        // -------------------------------------------------------- resolution --
         /// netId цели для сетевого запроса (0 - «сам отправитель»).
         public static uint NetIdOf(NetworkUser nu)
         {
@@ -152,7 +151,6 @@ namespace SandboxMenu
             return null;
         }
 
-        // --------------------------------------------------------- derived ----
         public static CharacterBody BodyOf(NetworkUser nu)
         {
             if (nu == null) return GameApi.GetBody();
@@ -227,7 +225,6 @@ namespace SandboxMenu
             return origin + Quaternion.Euler(0f, angle, 0f) * Vector3.forward * radius + Vector3.up * 0.5f;
         }
 
-        // ------------------------------------------- wrappers for selection ---
         public static CharacterBody Body { get { return BodyOf(SelectedUser); } }
 
         public static CharacterMaster Master { get { return MasterOf(SelectedUser); } }

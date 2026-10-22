@@ -110,7 +110,6 @@ namespace SandboxMenu
             return granted;
         }
 
-        // ------------------------------------------------- profile backups --
         /// <summary>
         /// Бэкапы профиля лежат рядом с плагином: BepInEx/plugins/SandboxBackups.
         /// Формат - штатный XML игры (UserProfile.ToXml), поэтому откат не зависит
@@ -230,7 +229,6 @@ namespace SandboxMenu
             }
         }
 
-        // -------------------------------------------------- Harmony patches --
         // Сигнатуры сверены с метаданными RoR2.dll:
         //   UserProfile.HasUnlockable(UnlockableDef)   [instance] -> bool
         //   UserProfile.HasUnlockable(string)          [instance] -> bool

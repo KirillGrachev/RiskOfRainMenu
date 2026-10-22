@@ -276,7 +276,6 @@ namespace SandboxMenu
             }
         }
 
-        // ------------------------------------------------------------ server --
         /// <summary>Сервер: проверить запрос и исполнить от имени отправителя.</summary>
         private static void OnRequest(NetworkMessage netMsg)
         {
@@ -354,7 +353,6 @@ namespace SandboxMenu
             catch (Exception e) { GameApi.WarnOnce("pong", e); }
         }
 
-        // ------------------------------------------------------------ client --
         /// <summary>Клиент: pong получен - на хосте стоит мод.</summary>
         private static void OnPong(NetworkMessage netMsg)
         {

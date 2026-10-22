@@ -30,7 +30,6 @@ namespace SandboxMenu
 
         public const int MaxWarnings = 40;
 
-        // ------------------------------------------------------------- log --
         public static void Info(string msg)
         {
             if (Log != null) Log.LogInfo(msg);
@@ -61,7 +60,6 @@ namespace SandboxMenu
             lock (_recentWarnings) return new List<string>(_recentWarnings);
         }
 
-        // ------------------------------------------------------------ user --
         public static LocalUser GetLocalUser()
         {
             try { return LocalUserManager.GetFirstLocalUser(); }

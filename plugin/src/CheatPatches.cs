@@ -36,7 +36,6 @@ namespace SandboxMenu {
     /// </summary>
     internal static class CheatPatches {
 
-        // ------------------------------------------------------- reflection --
         private static FieldInfo _rechargeTimeField;
         private static FieldInfo _subcooldownField;
         private static bool _equipmentReflectionResolved;
@@ -67,7 +66,6 @@ namespace SandboxMenu {
 
         }
 
-        // -------------------------------------------------------- mapping ----
         /// <summary>
         /// netId игрока-владельца тела (0 - тело не принадлежит игрокам).
         /// Сравнение идёт по master'у и по телу: в момент респавна master
@@ -115,7 +113,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- hooks -----
         /// <summary>
         /// Prefix TakeDamage: бессмертие жертвы, ваншот и множитель урона
         /// атакующего. false - урон не применяется вовсе.
@@ -221,7 +218,6 @@ namespace SandboxMenu {
 
         }
 
-        // ---------------------------------------------------- no cooldowns ---
         /// <summary>
         /// Тик из Plugin.Update (0.5 с): держит заполненными заряды умений и
         /// сбрасывает оборудование у всех игроков с флагом NoCooldown.

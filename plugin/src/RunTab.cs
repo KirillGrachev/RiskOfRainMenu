@@ -54,7 +54,6 @@ namespace SandboxMenu {
 
         }
 
-        // ----------------------------------------------------------- timer --
         private static void DrawTimer() {
 
             Widgets.Header(Texts.T("ТАЙМЕР И СЛОЖНОСТЬ", "TIMER AND DIFFICULTY"), Theme.HeaderBlue);
@@ -191,7 +190,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------ difficulty --
         private static void DrawDifficulty() {
 
             var difficulties = Difficulties();
@@ -276,7 +274,6 @@ namespace SandboxMenu {
 
         }
 
-        // ----------------------------------------------------- teleporter --
         private static void DrawTeleporter() {
 
             Widgets.Header(Texts.T("ТЕЛЕПОРТЕР", "TELEPORTER"), Theme.HeaderBlue);
@@ -332,7 +329,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- players --
         private static void DrawPlayers() {
 
             Widgets.Header(Texts.T("ТЕЛЕПОРТ ИГРОКОВ", "PLAYER TELEPORT"), Theme.HeaderBlue);
@@ -355,7 +351,6 @@ namespace SandboxMenu {
 
         }
 
-        // -------------------------------------------------------- landmarks --
         private static void DrawLandmarks() {
 
             Widgets.Header(Texts.T("ТЕЛЕПОРТ ПО КАРТЕ", "MAP TELEPORT"), Theme.HeaderBlue,
@@ -433,7 +428,6 @@ namespace SandboxMenu {
 
         }
 
-        // ---------------------------------------------------------- stages --
         private static void DrawStages() {
 
             Widgets.Header(Texts.T("СТАДИИ", "STAGES"), Theme.HeaderBlue,
@@ -478,7 +472,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------- artifacts --
         private static void DrawArtifacts() {
 
             Widgets.Header(Texts.T("АРТЕФАКТЫ", "ARTIFACTS"), Theme.HeaderBlue,

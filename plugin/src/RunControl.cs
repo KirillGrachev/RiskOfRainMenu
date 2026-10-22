@@ -39,7 +39,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------------ entry --
         /// <summary>Заморозить/разморозить таймер забега (глобальный флаг).</summary>
         public static void FreezeTimer(bool on) {
 
@@ -145,7 +144,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------- landmarks --
         /// <summary>Виды ориентиров для TeleportLandmark (значения P1 запроса).</summary>
         public const int KindTeleporter = 1;
         public const int KindChest = 2;
@@ -244,7 +242,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- timescale --
         /// <summary>Скорость игры в процентах (глобально, живёт на сервере).</summary>
         public static void SetTimeScale(int pct) {
 
@@ -307,7 +304,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- dispatch --
         /// <summary>
         /// Серверное исполнение запросов забега. false - код не наш.
         /// </summary>
@@ -355,7 +351,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------ run bodies ---
         private static void RunFreezeTimer(bool on) {
 
             var run = Run.instance;
@@ -636,7 +631,6 @@ namespace SandboxMenu {
 
         }
 
-        // -------------------------------------------------------- landmarks --
         private static void RunTeleportLandmark(NetworkUser target, int kind) {
 
             var body = BodyStrict(target);
@@ -828,7 +822,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- waypoints --
         private static void RunWaypointSave(NetworkUser target, int slot) {
 
             if (TrySavePoint(target, slot)) {
@@ -925,7 +918,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------------- shared --
         /// <summary>
         /// Перенос тела штатным TeleportBodyArgs (тот же набор флагов, что у
         /// телепорта игроков): миньонов берём с собой, транспорт покидаем,
@@ -956,7 +948,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- timescale --
         private static void RunSetTimeScale(int pct) {
 
             int clamped = CheatState.ClampPct(pct);
@@ -968,7 +959,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------------ misc ---
         /// <summary>
         /// Тело игрока без фолбэка на локального (PlayerTargets.BodyOf
         /// подменяет null локальным телом - для телепорта чужих игроков

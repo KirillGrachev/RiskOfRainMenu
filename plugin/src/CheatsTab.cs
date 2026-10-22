@@ -74,7 +74,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------- survivability --
         private static void DrawSurvivability(uint id) {
 
             Widgets.Header(Texts.T("ЖИВУЧЕСТЬ", "SURVIVABILITY"), Theme.HeaderRed);
@@ -127,7 +126,6 @@ namespace SandboxMenu {
 
         }
 
-        // ----------------------------------------------------- multipliers --
         private static void DrawMultipliers(uint id) {
 
             Widgets.Header(Texts.T("УРОН И СКОРОСТЬ", "DAMAGE AND SPEED"), Theme.HeaderRed,
@@ -163,7 +161,6 @@ namespace SandboxMenu {
 
         }
 
-        // ---------------------------------------------------------- skills --
         private static void DrawSkills(uint id) {
 
             Widgets.Header(Texts.T("УМЕНИЯ", "SKILLS"), Theme.HeaderRed);
@@ -190,7 +187,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- enemies --
         private static void DrawEnemies() {
 
             Widgets.Header(Texts.T("ВРАГИ", "ENEMIES"), Theme.HeaderRed);
@@ -234,7 +230,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- economy --
         private static void DrawEconomy(NetworkUser target) {
 
             Widgets.Header(Texts.T("ЭКОНОМИКА", "ECONOMY"), Theme.HeaderRed);
@@ -377,7 +372,6 @@ namespace SandboxMenu {
 
         }
 
-        // ----------------------------------------------------------- buffs --
         private static void DrawBuffs() {
 
             Widgets.Header(Texts.T("БАФЫ", "BUFFS"), Theme.HeaderRed,
@@ -507,7 +501,6 @@ namespace SandboxMenu {
 
         }
 
-        // ----------------------------------------------------------- flight --
         private static void DrawFlight() {
 
             Widgets.Header(Texts.T("ПОЛЁТ (ЛОКАЛЬНО)", "FLIGHT (LOCAL)"), Theme.HeaderRed,
@@ -551,7 +544,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- traversal --
         private static void DrawTraversal(uint id) {
 
             Widgets.Header(Texts.T("ПЕРЕМЕЩЕНИЕ", "TRAVERSAL"), Theme.HeaderRed);
@@ -568,7 +560,6 @@ namespace SandboxMenu {
 
         }
 
-        // ---------------------------------------------------------- overlays --
         private static void DrawOverlays() {
 
             Widgets.Header(Texts.T("ОВЕРЛЕИ (ЛОКАЛЬНО)", "OVERLAYS (LOCAL)"), Theme.HeaderRed,

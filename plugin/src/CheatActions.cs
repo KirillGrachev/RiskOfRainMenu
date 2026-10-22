@@ -44,7 +44,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------------ entry --
         /// <summary>Включить/выключить флаг чита у цели (GodModeAll - глобальный).</summary>
         public static void SetCheatFlag(CheatFlag flag, bool on) {
 
@@ -311,7 +310,6 @@ namespace SandboxMenu {
 
         }
 
-        // --------------------------------------------------------- dispatch --
         /// <summary>
         /// Серверное исполнение запросов трейнера. Возвращает false, если код
         /// действия не наш (вызывающий пробует следующий диспетчер).
@@ -378,7 +376,6 @@ namespace SandboxMenu {
 
         }
 
-        // ------------------------------------------------------ run bodies ---
         private static void RunSetCheatFlag(NetworkUser target, int flagValue, bool on) {
 
             if (!CheatState.IsKnownFlag(flagValue)) {
