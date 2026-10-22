@@ -49,7 +49,9 @@ namespace SandboxMenu {
             }
 
             foreach (var warning in warnings) {
-                GUILayout.Label("  " + warning, Theme.Small, GUILayout.Height(14f));
+                // без фиксированной высоты: строки предупреждений длинные,
+                // переносятся и занимают столько строк, сколько нужно
+                GUILayout.Label("  " + warning, Theme.SmallWrap);
             }
 
             GUILayout.Space(4f);
@@ -169,3 +171,4 @@ namespace SandboxMenu {
         }
     }
 }
+

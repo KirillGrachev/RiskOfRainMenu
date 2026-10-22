@@ -19,6 +19,11 @@ namespace SandboxMenu {
         public static GUIStyle Name;
         public static GUIStyle Small;
         public static GUIStyle SmallRich;
+
+        /// <summary>Тот же Small, но с переносом по словам: длинные диагностические
+        /// строки (блок ПРЕДУПРЕЖДЕНИЯ) не обрезаются краем окна, а высоту строки
+        /// GUILayout считает по факту переносов - скролл учитывает её честно.</summary>
+        public static GUIStyle SmallWrap;
         public static GUIStyle Button;
         public static GUIStyle TabButton;
         public static GUIStyle Field;
@@ -62,6 +67,10 @@ namespace SandboxMenu {
 
             SmallRich = new GUIStyle(Small);
             SmallRich.richText = true;
+
+            SmallWrap = new GUIStyle(Small);
+            SmallWrap.wordWrap = true;
+            SmallWrap.clipping = TextClipping.Clip;
 
             Button = new GUIStyle(GUI.skin.button);
             Button.fontSize = 12;
@@ -110,3 +119,4 @@ namespace SandboxMenu {
         }
     }
 }
+

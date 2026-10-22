@@ -37,6 +37,12 @@ namespace SandboxMenu
         private static string _statusCache = "";
         private static float _statusAt;
 
+        // состояние указателя до открытия меню, чтобы при закрытии вернуть ровно
+        // то, что было (в забеге игра держит курсор скрытым и залоченным,
+        // в главных меню - видимым): безусловный restore сломал бы главное меню
+        private static bool _cursorWasVisible;
+        private static CursorLockMode _cursorWasLock;
+
         private static readonly string[] TabsRu =
         {
             "Разблокировки", "Клоны", "Персонажи", "Предметы", "Дроп", "Объекты", "Инфо", "Читы", "Забег"
@@ -55,7 +61,18 @@ namespace SandboxMenu
         {
             if (_visible) PersistState();
             _visible = !_visible;
-            if (!_visible) return;
+            if (!_visible)
+            {
+                // возвращаем указатель игре: ровно то состояние, что было до открытия
+                Cursor.visible = _cursorWasVisible;
+                Cursor.lockState = _cursorWasLock;
+                return;
+            }
+            // меню открыто: без видимого разблокированного курсора кликать нечем -
+            // игра в забеге держит указатель скрытым/залоченным под прицел
+            _cursorWasVisible = Cursor.visible;
+            _cursorWasLock = Cursor.lockState;
+            ApplyCursor();
             LoadState();
 
             var cfg = SandboxMenuPlugin.MenuLanguage;
@@ -72,6 +89,7 @@ namespace SandboxMenu
         {
             if (!_visible) return;
             Theme.Ensure();
+            ApplyCursor();
             LoadState();
 
             // игра красит GUI.color под свой HUD - без сброса наше окно
@@ -105,6 +123,21 @@ namespace SandboxMenu
             GUI.backgroundColor = bgColor;
             GUI.contentColor = contentColor;
             GUI.matrix = matrix;
+        }
+
+        /// <summary>Держит курсор видимым и разблокированным, пока меню открыто.
+        /// Вызывается каждый кадр: игра в забеге переставляет указатель под прицел
+        /// (скрытый/залоченный, а местами программный), из-за чего над IMGUI-окном
+        /// его не видно или он «уходит под окно». Аппаратный курсор ОС
+        /// (SetCursor(null, Vector2.zero, CursorMode.Auto)) рисуется поверх любого IMGUI.</summary>
+        private static void ApplyCursor()
+        {
+            if (!Cursor.visible || Cursor.lockState != CursorLockMode.None)
+            {
+                Cursor.visible = true;
+                Cursor.lockState = CursorLockMode.None;
+            }
+            Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
         }
 
         /// <summary>Восстановить позицию/вкладку/свёрнутость из конфига (один раз).</summary>
@@ -252,4 +285,5 @@ namespace SandboxMenu
         }
     }
 }
+
 
