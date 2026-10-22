@@ -150,6 +150,52 @@ namespace SandboxMenu {
 
         }
 
+        /// <summary>Установить войд-монеты цели (третья валюта игры, SOTV).</summary>
+        public static void SetVoidCoins(int amount) {
+
+            var t = Target;
+
+            if (Local) {
+                RunSetVoidCoins(t, amount);
+                return;
+            }
+
+            Send(new SandboxRequest { Action = ActionCode.SetVoidCoins, TargetNetId = TargetId(t), P1 = amount });
+
+        }
+
+        /// <summary>Добавить войд-монеты цели.</summary>
+        public static void GiveVoidCoins(int amount) {
+
+            var t = Target;
+
+            if (Local) {
+                RunGiveVoidCoins(t, amount);
+                return;
+            }
+
+            Send(new SandboxRequest { Action = ActionCode.GiveVoidCoins, TargetNetId = TargetId(t), P1 = amount });
+
+        }
+
+        /// <summary>Снять стаки бафа с цели (зеркало GiveBuff).</summary>
+        public static void RemoveBuff(int buffIndexValue, int stacks) {
+            var t = Target;
+
+            if (Local) {
+                RunRemoveBuff(t, buffIndexValue, stacks);
+                return;
+            }
+
+            Send(new SandboxRequest {
+                Action = ActionCode.RemoveBuff,
+                TargetNetId = TargetId(t),
+                P1 = buffIndexValue,
+                P2 = stacks
+            });
+
+        }
+
         /// <summary>Снять с цели все бафы и дебафы.</summary>
         public static void ClearBuffs() {
 
@@ -291,6 +337,15 @@ namespace SandboxMenu {
                     return true;
                 case ActionCode.GiveBuff:
                     RunGiveBuff(target, req.P1, req.P2);
+                    return true;
+                case ActionCode.RemoveBuff:
+                    RunRemoveBuff(target, req.P1, req.P2);
+                    return true;
+                case ActionCode.SetVoidCoins:
+                    RunSetVoidCoins(target, req.P1);
+                    return true;
+                case ActionCode.GiveVoidCoins:
+                    RunGiveVoidCoins(target, req.P1);
                     return true;
                 case ActionCode.ClearBuffs:
                     RunClearBuffs(target);
@@ -588,7 +643,6 @@ namespace SandboxMenu {
         }
 
         private static void RunGiveBuff(NetworkUser target, int buffIndexValue, int stacks) {
-
             var body = PlayerTargets.BodyOf(target);
 
             if (body == null) {
@@ -819,6 +873,93 @@ namespace SandboxMenu {
 
         }
 
+        private static void RunSetVoidCoins(NetworkUser target, int amount) {
+
+            var master = PlayerTargets.MasterOf(target);
+
+            if (master == null) {
+
+                GameApi.SayErr(Texts.T("чит: у цели нет мастера", "cheat: target has no master"));
+                return;
+
+            }
+
+            uint value = (uint)Math.Max(0, Math.Min(amount, CheatState.MaxMoney));
+            master.voidCoins = value;
+            GameApi.SayOk(Texts.T(
+                    $"чит: войд-монеты [{PlayerTargets.DisplayName(target)}] = {GameApi.Val(value)}",
+                    $"cheat: void coins of [{PlayerTargets.DisplayName(target)}] = {GameApi.Val(value)}"));
+
+        }
+
+        private static void RunGiveVoidCoins(NetworkUser target, int amount) {
+
+            var master = PlayerTargets.MasterOf(target);
+
+            if (master == null) {
+
+                GameApi.SayErr(Texts.T("чит: у цели нет мастера", "cheat: target has no master"));
+                return;
+
+            }
+
+            long next = Math.Max(0, Math.Min((long)master.voidCoins + amount, CheatState.MaxMoney));
+            master.voidCoins = (uint)next;
+            GameApi.SayOk(Texts.T(
+                    $"чит: войд-монеты [{PlayerTargets.DisplayName(target)}] +{GameApi.Val(amount)} = {GameApi.Val(next)}",
+                    $"cheat: void coins of [{PlayerTargets.DisplayName(target)}] +{GameApi.Val(amount)} = {GameApi.Val(next)}"));
+
+        }
+
+        private static void RunRemoveBuff(NetworkUser target, int buffIndexValue, int stacks) {
+
+            var body = PlayerTargets.BodyOf(target);
+
+            if (body == null) {
+
+                GameApi.SayErr(Texts.T("чит: у цели нет тела", "cheat: target has no body"));
+                return;
+
+            }
+
+            BuffDef def = null;
+            var index = (BuffIndex)buffIndexValue;
+
+            try {
+
+                if (buffIndexValue >= 1 && buffIndexValue <= BuffCatalog.buffCount) {
+                    def = BuffCatalog.GetBuffDef(index);
+                }
+
+            } catch (Exception e) {
+                GameApi.WarnOnce("RemoveBuff.GetBuffDef", e);
+            }
+
+            if (def == null) {
+
+                GameApi.SayErr(Texts.T("чит: баф не найден", "cheat: buff not found") + $" ({buffIndexValue})");
+                return;
+
+            }
+
+            int count = CheatState.ClampStacks(stacks);
+
+            try {
+
+                for (int i = 0; i < count; i++) {
+                    body.RemoveBuff(index);
+                }
+
+                GameApi.SayOk(Texts.T(
+                        $"чит: снят баф {GameApi.Val(def.name)} x{count}",
+                        $"cheat: removed buff {GameApi.Val(def.name)} x{count}"));
+
+            } catch (Exception e) {
+                GameApi.Warn("RemoveBuff", e);
+            }
+
+        }
+
         private static void RunRespawnAs(NetworkUser target, string bodyName) {
 
             if (!NetProtocol.IsServer) {
@@ -857,6 +998,21 @@ namespace SandboxMenu {
                 GameApi.SayErr(Texts.T(
                         "персонаж: у цели нет мастера",
                         "character: the target has no master"));
+                return;
+
+            }
+
+            // смерть цели во время выбора персонажа ломала состояние: мастер
+            // успевал респаунуть тело поверх умирающего, персонаж «падал», а
+            // управление оставалось у старого тела (дрона). Мёртвым - нельзя
+            var currentBody = master.GetBody();
+
+            if (currentBody != null && currentBody.healthComponent != null
+                    && !currentBody.healthComponent.alive) {
+
+                GameApi.SayErr(Texts.T(
+                        "персонаж: цель мертва - сначала лечение или воскрешение",
+                        "character: the target is dead - heal or revive first"));
                 return;
 
             }
@@ -901,3 +1057,4 @@ namespace SandboxMenu {
     }
 
 }
+

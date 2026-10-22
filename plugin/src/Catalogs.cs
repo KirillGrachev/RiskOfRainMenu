@@ -153,6 +153,9 @@ namespace SandboxMenu
         private static int NameRank(string name)
         {
             if (string.IsNullOrEmpty(name) || name == "???") return 1;
+            // сырое имя перечисления (ItemIndex.Karma, EquipmentIndex.X) - это
+            // нерезолвленный internalName: такой «мусор» уходит в конец списка
+            if (name.IndexOf('.') >= 0) return 1;
             bool tokenLike = name.IndexOf('_') >= 0 && name == name.ToUpperInvariant();
             return tokenLike ? 1 : 0;
         }
@@ -374,4 +377,5 @@ namespace SandboxMenu
         }
     }
 }
+
 

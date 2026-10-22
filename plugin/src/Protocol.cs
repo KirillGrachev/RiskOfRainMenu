@@ -51,6 +51,9 @@ namespace SandboxMenu
         public const byte WaypointLoad = 42;
         public const byte RespawnAs = 43;
         public const byte SetTimeScale = 44;
+        public const byte RemoveBuff = 45;
+        public const byte SetVoidCoins = 46;
+        public const byte GiveVoidCoins = 47;
     }
 
     /// <summary>
@@ -104,6 +107,8 @@ namespace SandboxMenu
                 case ActionCode.GiveMoney:
                 case ActionCode.SetLunarCoins:
                 case ActionCode.GiveLunarCoins:
+                case ActionCode.SetVoidCoins:
+                case ActionCode.GiveVoidCoins:
                     return raw < 0 ? 0 : System.Math.Min(raw, CheatState.MaxMoney);
                 case ActionCode.SetTeamLevel:
                     return raw < 1 ? 1 : System.Math.Min(raw, CheatState.MaxLevel);
@@ -200,4 +205,5 @@ namespace SandboxMenu
         }
     }
 }
+
 

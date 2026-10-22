@@ -18,6 +18,7 @@ namespace SandboxMenu {
         private static string _search = "";
         private static string _moneyText = "10000";
         private static string _coinsText = "1000";
+        private static string _voidText = "100";
         private static int _levelSlider = 1;
         private static bool _levelInit;
         private static int _radius = 0;
@@ -286,6 +287,26 @@ namespace SandboxMenu {
 
             GUILayout.BeginHorizontal();
 
+                GUILayout.Label(Texts.T("Войд", "Void"), Theme.Name,
+                        GUILayout.Width(Widgets.LabelColumn), GUILayout.Height(Widgets.RowHeight));
+                _voidText = Widgets.TextField(_voidText, 90f);
+
+                if (Widgets.Button(Texts.T("Задать", "Set"), 62f,
+                        Texts.T("установить войд-монеты цели (третья валюта игры, SOTV)",
+                                "set the void coins of the target (third currency, SOTV)"))) {
+                    CheatActions.SetVoidCoins(Widgets.ParseInt(_voidText, 0));
+                }
+
+                if (Widgets.Button(Texts.T("Добавить", "Give"), 84f,
+                        Texts.T("добавить войд-монеты цели",
+                                "add void coins to the target"))) {
+                    CheatActions.GiveVoidCoins(Widgets.ParseInt(_voidText, 0));
+                }
+
+            GUILayout.EndHorizontal();
+
+            GUILayout.BeginHorizontal();
+
                 GUILayout.Label(Texts.T("Уровень", "Level"), Theme.Name,
                         GUILayout.Width(Widgets.LabelColumn), GUILayout.Height(Widgets.RowHeight));
                 _levelSlider = Widgets.SliderInline(_levelSlider, 1, CheatState.MaxLevel, 140f);
@@ -325,6 +346,7 @@ namespace SandboxMenu {
 
             uint money = 0;
             uint coins = 0;
+            uint voidCoins = 0;
             uint level = 0;
 
             try {
@@ -333,6 +355,7 @@ namespace SandboxMenu {
 
                 if (master != null) {
                     money = master.money;
+                    voidCoins = master.voidCoins;
                 }
 
                 if (target != null) {
@@ -349,6 +372,7 @@ namespace SandboxMenu {
 
             return Texts.T("деньги", "money") + $": {GameApi.Val(money)}   " +
                     Texts.T("монеты", "coins") + $": {GameApi.Val(coins)}   " +
+                    Texts.T("войд", "void") + $": {GameApi.Val(voidCoins)}   " +
                     Texts.T("уровень", "level") + $": {GameApi.Val(level)}";
 
         }
@@ -404,6 +428,12 @@ namespace SandboxMenu {
                     if (Widgets.Button("x5", 40f,
                             Texts.T("пять стаков бафа цели", "five stacks of the buff to the target"))) {
                         CheatActions.GiveBuff((int)buff.Index, 5);
+                    }
+
+                    if (Widgets.Button(Texts.T("Убрать", "Remove"), 62f,
+                            Texts.T("снять пять стаков бафа с цели (зеркало выдачи)",
+                                    "remove five stacks of the buff from the target"))) {
+                        CheatActions.RemoveBuff((int)buff.Index, 5);
                     }
 
                     string label = buff.Name;
@@ -552,6 +582,45 @@ namespace SandboxMenu {
 
             if (next != EspOverlay.Enabled) {
                 EspOverlay.Enabled = next;
+                SandboxMenuPlugin.EspEnabled.Value = next;
+            }
+
+            bool mobs = Widgets.Toggle(EspOverlay.Mobs,
+                    Texts.T("подсветка мобов", "highlight mobs"),
+                    Texts.T("отдельная настройка: рамки вокруг живых врагов (команда Monster), боссы и так в списке",
+                            "separate option: boxes around live enemies (Monster team); bosses are marked anyway"));
+
+            if (mobs != EspOverlay.Mobs) {
+                EspOverlay.Mobs = mobs;
+                SandboxMenuPlugin.EspMobs.Value = mobs;
+            }
+
+            bool boxes = Widgets.Toggle(EspOverlay.Boxes,
+                    Texts.T("рамки по габаритам", "bounds boxes"),
+                    Texts.T("обводить объект рамкой по его габаритам, а не точкой в центре",
+                            "outline the object by its bounds instead of a center dot"));
+
+            if (boxes != EspOverlay.Boxes) {
+                EspOverlay.Boxes = boxes;
+                SandboxMenuPlugin.EspBoxes.Value = boxes;
+            }
+
+            bool labels = Widgets.Toggle(EspOverlay.Labels,
+                    Texts.T("подписи с дистанцией", "distance labels"),
+                    Texts.T("имя и дистанция у маркера; выключи - останутся только рамки",
+                            "name and distance next to a marker; off leaves boxes only"));
+
+            if (labels != EspOverlay.Labels) {
+                EspOverlay.Labels = labels;
+                SandboxMenuPlugin.EspLabels.Value = labels;
+            }
+
+            int dist = Widgets.Slider(Texts.T("Дист., м", "Range, m"),
+                    Mathf.RoundToInt(EspOverlay.MaxDistance), 50, 1000, 160f);
+
+            if (Mathf.Abs(dist - EspOverlay.MaxDistance) > 0.1f) {
+                EspOverlay.MaxDistance = dist;
+                SandboxMenuPlugin.EspMaxDistance.Value = dist;
             }
 
         }
@@ -559,3 +628,4 @@ namespace SandboxMenu {
     }
 
 }
+

@@ -136,7 +136,7 @@ jobs:
           cd dist
           sha256sum RoR2SandboxMenu.dll > SHA256SUMS.txt
           gh release delete latest --yes --cleanup-tag --repo "${{ github.repository }}" || true
-          gh release create latest             --target "$GITHUB_SHA"             --title "Latest menu build"             --notes "Актуальная сборка последнего коммита main. RoR2SandboxMenu.dll кладётся в BepInEx/plugins/. Коммит: $GITHUB_SHA"             --repo "${{ github.repository }}"             RoR2SandboxMenu.dll SHA256SUMS.txt
+          gh release create latest             --target "$GITHUB_SHA"             --title "Latest menu build"             --notes "Latest build of the last commit on main. Put RoR2SandboxMenu.dll into BepInEx/plugins/. Commit: $GITHUB_SHA"             --repo "${{ github.repository }}"             RoR2SandboxMenu.dll SHA256SUMS.txt
 
   release:
     name: Publish GitHub Release
@@ -162,6 +162,7 @@ jobs:
           sha256sum RoR2SandboxMenu.dll RoR2SandboxMenu-${GITHUB_REF_NAME}.zip > SHA256SUMS.txt
           gh release create "${GITHUB_REF_NAME}" \
             --title "RoR2 Sandbox Menu ${GITHUB_REF_NAME}" \
-            --notes "Сборка против игровой сборки из кэша Actions. dll кладётся в BepInEx/plugins." \
+            --notes "Built against the game assembly from the Actions cache. Put the dll into BepInEx/plugins." \
             RoR2SandboxMenu-${GITHUB_REF_NAME}.zip SHA256SUMS.txt
+
 

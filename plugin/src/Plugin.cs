@@ -41,6 +41,11 @@ namespace SandboxMenu
         internal static ConfigEntry<int> MenuX;
         internal static ConfigEntry<int> MenuY;
         internal static ConfigEntry<float> FlySpeed;
+        internal static ConfigEntry<bool> EspEnabled;
+        internal static ConfigEntry<bool> EspMobs;
+        internal static ConfigEntry<bool> EspBoxes;
+        internal static ConfigEntry<bool> EspLabels;
+        internal static ConfigEntry<int> EspMaxDistance;
 
         /// <summary>Инстанс для сохранения конфига из статических классов меню.</summary>
         internal static SandboxMenuPlugin Self;
@@ -73,6 +78,16 @@ namespace SandboxMenu
                 "Remembered window position Y.");
             FlySpeed = Config.Bind("Cheats", "FlySpeed", 20f,
                 "Free-flight speed in meters per second (Shift gives x3). Range 5..100 in the menu.");
+            EspEnabled = Config.Bind("Overlay", "Esp", false,
+                "Object highlight overlay (ESP): teleporter, chests, shrines, bosses.");
+            EspMobs = Config.Bind("Overlay", "EspMobs", false,
+                "ESP: also box live monsters (Monster team). Separate from objects on purpose.");
+            EspBoxes = Config.Bind("Overlay", "EspBoxes", true,
+                "ESP: outline objects by their bounds instead of a center dot.");
+            EspLabels = Config.Bind("Overlay", "EspLabels", true,
+                "ESP: name + distance labels next to markers.");
+            EspMaxDistance = Config.Bind("Overlay", "EspMaxDistance", 400,
+                "ESP: marker range in meters. Range 50..1000.");
             CloneRespawnDelay = Config.Bind("Clone", "RespawnDelaySeconds", 5,
                 "Pause before respawning a clone that died (0 = instantly).");
             CloneFollowDefault = Config.Bind("Clone", "FollowByDefault", true,
@@ -83,6 +98,12 @@ namespace SandboxMenu
                 "any - clients may act on any player; self - clients may act only on themselves.");
 
             Texts.Russian = !string.Equals(MenuLanguage.Value, "en", System.StringComparison.OrdinalIgnoreCase);
+
+            EspOverlay.Enabled = EspEnabled.Value;
+            EspOverlay.Mobs = EspMobs.Value;
+            EspOverlay.Boxes = EspBoxes.Value;
+            EspOverlay.Labels = EspLabels.Value;
+            EspOverlay.MaxDistance = Mathf.Clamp(EspMaxDistance.Value, 50, 1000);
 
             UnlockPatches.Apply();
             Catalogs.Reset();
@@ -228,11 +249,17 @@ namespace SandboxMenu
             }
         }
 
+        /// <summary>Конфиг пишется не только при закрытии меню, но и при выходе
+        /// из игры: настройки ESP меняются тумблерами вкладки «Читы».</summary>
+        private void OnApplicationQuit()
+        {
+            try { Config.Save(); } catch { /* best effort */ }
+        }
+
         private void OnGUI()
         {
             // ESP рисуется до окна: меню перекрывает маркеры, а не наоборот
-            try { EspOverlay.Draw(); }
-            catch (Exception e) { GameApi.WarnOnce("EspOverlay.Draw", e); }
+            try { EspOverlay.Draw(); }            catch (Exception e) { GameApi.WarnOnce("EspOverlay.Draw", e); }
             try { MenuUI.Draw(); }
             catch (Exception e) { GameApi.WarnOnce("MenuUI.Draw", e); }
         }
@@ -249,4 +276,5 @@ namespace SandboxMenu
         public const string Name = "RoR2 Sandbox Menu";
     }
 }
+
 

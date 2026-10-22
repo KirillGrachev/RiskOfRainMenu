@@ -38,23 +38,6 @@ namespace SandboxMenu {
             }
 
             GUILayout.Space(4f);
-            Widgets.Header(Texts.T("ПРЕДУПРЕЖДЕНИЯ", "WARNINGS"), Theme.HeaderRed,
-                    Texts.T("то же самое лежит в BepInEx/LogOutput.log",
-                            "the same lines live in BepInEx/LogOutput.log"));
-
-            var warnings = GameApi.RecentWarnings();
-
-            if (warnings.Count == 0) {
-                GUILayout.Label("none", Theme.Small, GUILayout.Height(14f));
-            }
-
-            foreach (var warning in warnings) {
-                // без фиксированной высоты: строки предупреждений длинные,
-                // переносятся и занимают столько строк, сколько нужно
-                GUILayout.Label("  " + warning, Theme.SmallWrap);
-            }
-
-            GUILayout.Space(4f);
             GUILayout.BeginHorizontal();
                 if (Widgets.Button(Texts.T("Убрать модели-призраки", "Remove ghost models"), 210f,
                         Texts.T("доубить тела без master'а: наследие старых удалений",
@@ -69,6 +52,25 @@ namespace SandboxMenu {
                     Texts.T("перечитать каталоги игры заново",
                             "re-read the game catalogs"))) {
                 Catalogs.BuildAll();
+            }
+
+            // диагностический мусор - в самый низ вкладки: рабочее содержимое
+            // (сводка, игроки, кнопки) не должно уезжать под простыню предупреждений
+            GUILayout.Space(6f);
+            Widgets.Header(Texts.T("ПРЕДУПРЕЖДЕНИЯ", "WARNINGS"), Theme.HeaderRed,
+                    Texts.T("то же самое лежит в BepInEx/LogOutput.log",
+                            "the same lines live in BepInEx/LogOutput.log"));
+
+            var warnings = GameApi.RecentWarnings();
+
+            if (warnings.Count == 0) {
+                GUILayout.Label("none", Theme.Small, GUILayout.Height(14f));
+            }
+
+            foreach (var warning in warnings) {
+                // без фиксированной высоты: строки предупреждений длинные,
+                // переносятся и занимают столько строк, сколько нужно
+                GUILayout.Label("  " + warning, Theme.SmallWrap);
             }
 
         }

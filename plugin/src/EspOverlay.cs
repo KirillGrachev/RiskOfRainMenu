@@ -24,9 +24,23 @@ namespace SandboxMenu {
         /// <summary>Включён ли оверлей (переключается вкладкой «Читы»).</summary>
         public static bool Enabled;
 
+        /// <summary>Подсветка мобов (команда Monster) - отдельная настройка:
+        /// врагов на карте много, и постоянная рамка на каждом мешала бы.</summary>
+        public static bool Mobs;
+
+        /// <summary>Обводить объект рамкой по габаритам, а не точкой в центре.</summary>
+        public static bool Boxes = true;
+
+        /// <summary>Подписи с именем и дистанцией у маркеров.</summary>
+        public static bool Labels = true;
+
+        /// <summary>Дальность маркеров в метрах (конфиг Overlay/EspMaxDistance).</summary>
+        public static float MaxDistance = 400f;
+
+        private static readonly Color MobColor = new Color(1f, 0.62f, 0.20f);
+
         private const float RefreshInterval = 0.25f;
         private const int MaxMarkers = 48;
-        private const float MaxDistance = 400f;
 
         private class Marker {
 
@@ -34,6 +48,8 @@ namespace SandboxMenu {
             public string Label;
             public Color Color;
             public float Distance;
+            public Bounds Bounds;
+            public bool HasBounds;
 
         }
 
@@ -95,8 +111,21 @@ namespace SandboxMenu {
                     }
 
                     GUI.color = marker.Color;
-                    GUI.Box(new Rect(x - 4f, y - 4f, 8f, 8f), GUIContent.none, Theme.EspBox);
-                    GUI.Label(new Rect(x + 8f, y - 9f, 220f, 18f), marker.Label, Theme.Small);
+
+                    bool boxed = false;
+
+                    if (Boxes && marker.HasBounds) {
+                        boxed = DrawBoundsBox(camera, marker.Bounds, height);
+                    }
+
+                    if (!boxed) {
+                        // габаритов нет (или рамки выключены) - старая точка в центре
+                        GUI.Box(new Rect(x - 4f, y - 4f, 8f, 8f), GUIContent.none, Theme.EspBox);
+                    }
+
+                    if (Labels) {
+                        GUI.Label(new Rect(x + 8f, y - 9f, 220f, 18f), marker.Label, Theme.Small);
+                    }
 
                 }
 
@@ -127,6 +156,10 @@ namespace SandboxMenu {
             AddPurchases(origin);
             AddBosses(origin);
 
+            if (Mobs) {
+                AddMobs(origin);
+            }
+
             Cache.Sort((a, b) => a.Distance.CompareTo(b.Distance));
 
             if (Cache.Count > MaxMarkers) {
@@ -146,7 +179,7 @@ namespace SandboxMenu {
                 }
 
                 Add(origin, teleporter.transform.position,
-                        Texts.T("Телепорт", "Teleporter"), TeleporterColor);
+                        Texts.T("Телепорт", "Teleporter"), TeleporterColor, BoundsOf(teleporter));
 
             } catch (Exception e) {
                 GameApi.WarnOnce("EspOverlay.AddTeleporter", e);
@@ -173,7 +206,7 @@ namespace SandboxMenu {
 
                     Add(origin, purchase.transform.position,
                             chest ? Texts.T("Сундук", "Chest") : Texts.T("Алтарь", "Shrine"),
-                            chest ? ChestColor : ShrineColor);
+                            chest ? ChestColor : ShrineColor, BoundsOf(purchase));
 
                 }
 
@@ -213,7 +246,7 @@ namespace SandboxMenu {
                         name = boss.name;
                     }
 
-                    Add(origin, boss.footPosition, name, BossColor);
+                    Add(origin, boss.footPosition, name, BossColor, BoundsOf(boss));
 
                 }
 
@@ -223,7 +256,116 @@ namespace SandboxMenu {
 
         }
 
-        private static void Add(Vector3 origin, Vector3 position, string name, Color color) {
+        /// <summary>Габариты объекта для рамки: collider, если есть.</summary>
+        private static Bounds? BoundsOf(Component target) {
+
+            if (target == null) {
+                return null;
+            }
+
+            try {
+
+                var collider = target.GetComponent<Collider>();
+                return collider != null ? collider.bounds : (Bounds?)null;
+
+            } catch {
+                return null;
+            }
+
+        }
+
+        /// <summary>Рамка по восьми углам габаритов: объект обведён на экране,
+        /// а не отмечен точкой где-то в своём центре. false - габариты за спиной
+        /// камеры или рамка вышла неприлично большой (объект вплотную).</summary>
+        private static bool DrawBoundsBox(Camera camera, Bounds bounds, float screenHeight) {
+
+            float x0 = float.MaxValue, y0 = float.MaxValue;
+            float x1 = float.MinValue, y1 = float.MinValue;
+
+            for (int i = 0; i < 8; i++) {
+
+                Vector3 corner = new Vector3(
+                        (i & 1) == 0 ? bounds.min.x : bounds.max.x,
+                        (i & 2) == 0 ? bounds.min.y : bounds.max.y,
+                        (i & 4) == 0 ? bounds.min.z : bounds.max.z);
+
+                Vector3 screen = camera.WorldToScreenPoint(corner);
+
+                if (screen.z <= 0.1f) {
+                    return false;
+                }
+
+                float sx = screen.x;
+                float sy = screenHeight - screen.y;
+
+                if (sx < x0) x0 = sx;
+                if (sx > x1) x1 = sx;
+                if (sy < y0) y0 = sy;
+                if (sy > y1) y1 = sy;
+
+            }
+
+            float width = x1 - x0;
+            float height = y1 - y0;
+
+            if (width < 2f || height < 2f || width > Screen.width * 1.5f || height > screenHeight * 1.5f) {
+                return false;
+            }
+
+            const float t = 1.5f;
+
+            GUI.Box(new Rect(x0, y0, width, t), GUIContent.none, Theme.EspBox);
+            GUI.Box(new Rect(x0, y1 - t, width, t), GUIContent.none, Theme.EspBox);
+            GUI.Box(new Rect(x0, y0, t, height), GUIContent.none, Theme.EspBox);
+            GUI.Box(new Rect(x1 - t, y0, t, height), GUIContent.none, Theme.EspBox);
+
+            return true;
+
+        }
+
+        /// <summary>Живые враги (команда Monster): боссы и так помечены своим
+        /// цветом, поэтому здесь только рядовые мобы. Включается тумблером.</summary>
+        private static void AddMobs(Vector3 origin) {
+
+            try {
+
+                foreach (var mob in CharacterBody.readOnlyInstancesList) {
+
+                    if (mob == null || mob.isBoss) {
+                        continue;
+                    }
+
+                    var health = mob.healthComponent;
+
+                    if (health == null || !health.alive) {
+                        continue;
+                    }
+
+                    var team = mob.teamComponent;
+
+                    if (team == null || team.teamIndex != TeamIndex.Monster) {
+                        continue;
+                    }
+
+                    string name;
+
+                    try {
+                        name = mob.GetDisplayName();
+                    } catch {
+                        name = mob.name;
+                    }
+
+                    Add(origin, mob.footPosition, name, MobColor, BoundsOf(mob));
+
+                }
+
+            } catch (Exception e) {
+                GameApi.WarnOnce("EspOverlay.AddMobs", e);
+            }
+
+        }
+
+        private static void Add(Vector3 origin, Vector3 position, string name, Color color, Bounds? bounds = null) {
 
             float distance = Vector3.Distance(origin, position);
 
@@ -233,9 +375,11 @@ namespace SandboxMenu {
 
             Cache.Add(new Marker {
                 Position = position,
-                Label = name + "  " + Mathf.RoundToInt(distance) + "m",
+                Label = Labels ? name + "  " + Mathf.RoundToInt(distance) + "m" : name,
                 Color = color,
-                Distance = distance
+                Distance = distance,
+                Bounds = bounds ?? default(Bounds),
+                HasBounds = bounds.HasValue
             });
 
         }
@@ -243,3 +387,4 @@ namespace SandboxMenu {
     }
 
 }
+

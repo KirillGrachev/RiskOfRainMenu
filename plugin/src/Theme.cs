@@ -37,7 +37,20 @@ namespace SandboxMenu {
         public static void Ensure() {
 
             if (Ready) {
-                return;
+
+                // фоновые текстуры могут погибнуть снаружи (игра грузит/выгружает
+                // ресурсы): «фон то есть, то нет». Уничтоженный Texture2D сравнивается
+                // с null, поэтому валидация дешёвая - несколько проверок за кадр
+                if (Window != null && Window.normal.background != null
+                        && HeaderBlue.normal.background != null
+                        && HeaderRed.normal.background != null
+                        && HeaderPurple.normal.background != null
+                        && EspBox.normal.background != null) {
+                    return;
+                }
+
+                Ready = false;
+
             }
 
             Ready = true;
@@ -111,6 +124,9 @@ namespace SandboxMenu {
         private static Texture2D CreateTexture(float red, float green, float blue, float alpha) {
 
             var texture = new Texture2D(1, 1);
+            // без этого флажка текстуры могут уезжать в выгрузку ресурсов игры -
+            // фон окна пропадал «на ровном месте»
+            texture.hideFlags = HideFlags.HideAndDontSave;
             texture.SetPixel(0, 0, new Color(red, green, blue, alpha));
             texture.Apply();
 
