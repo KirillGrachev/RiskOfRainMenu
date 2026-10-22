@@ -85,22 +85,22 @@ namespace SandboxMenu {
                 GameApi.WarnOnce("NetIdForBody.master", e);
             }
 
-            foreach (var nu in PlayerTargets.Users) {
+            foreach (var networkUser in PlayerTargets.Users) {
 
-                if (nu == null) {
+                if (networkUser == null) {
                     continue;
                 }
 
                 try {
 
-                    if (master != null && ReferenceEquals(nu.master, master)) {
-                        return PlayerTargets.NetIdOf(nu);
+                    if (master != null && ReferenceEquals(networkUser.master, master)) {
+                        return PlayerTargets.NetIdOf(networkUser);
                     }
 
-                    var userBody = nu.GetCurrentBody();
+                    var userBody = networkUser.GetCurrentBody();
 
                     if (userBody != null && ReferenceEquals(userBody, body)) {
-                        return PlayerTargets.NetIdOf(nu);
+                        return PlayerTargets.NetIdOf(networkUser);
                     }
 
                 } catch (Exception e) {
@@ -178,13 +178,13 @@ namespace SandboxMenu {
                 return;
             }
 
-            uint id = NetIdForBody(body);
+            uint netId = NetIdForBody(body);
 
-            if (id == 0u) {
+            if (netId == 0u) {
                 return;
             }
 
-            int pct = CheatState.ValueOf(id, which);
+            int pct = CheatState.ValueOf(netId, which);
 
             if (pct != CheatState.DefaultPct) {
                 result *= pct / 100f;
@@ -206,13 +206,13 @@ namespace SandboxMenu {
                 return;
             }
 
-            uint id = NetIdForBody(body);
+            uint netId = NetIdForBody(body);
 
-            if (id == 0u) {
+            if (netId == 0u) {
                 return;
             }
 
-            if (CheatState.HasFlag(id, CheatFlag.InfiniteJumps)) {
+            if (CheatState.HasFlag(netId, CheatFlag.InfiniteJumps)) {
                 result = MaxJumps;
             }
 
@@ -228,19 +228,19 @@ namespace SandboxMenu {
                 return;
             }
 
-            foreach (var nu in PlayerTargets.Users) {
+            foreach (var networkUser in PlayerTargets.Users) {
 
-                if (nu == null) {
+                if (networkUser == null) {
                     continue;
                 }
 
-                uint id = PlayerTargets.NetIdOf(nu);
+                uint netId = PlayerTargets.NetIdOf(networkUser);
 
-                if (id == 0u || !CheatState.HasFlag(id, CheatFlag.NoCooldown)) {
+                if (netId == 0u || !CheatState.HasFlag(netId, CheatFlag.NoCooldown)) {
                     continue;
                 }
 
-                var body = PlayerTargets.BodyOf(nu);
+                var body = PlayerTargets.BodyOf(networkUser);
 
                 if (body != null) {
                     RefillSkills(body);

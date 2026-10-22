@@ -161,12 +161,12 @@ namespace SandboxMenu
         }
 
         /// <summary>Сравнение имён: пригодные первыми, остальные в конце.</summary>
-        private static int CompareByName(string a, string b)
+        private static int CompareByName(string leftName, string rightName)
         {
-            int ra = NameRank(a);
-            int rb = NameRank(b);
-            if (ra != rb) return ra - rb;
-            return string.CompareOrdinal(a, b);
+            int leftRank = NameRank(leftName);
+            int rightRank = NameRank(rightName);
+            if (leftRank != rightRank) return leftRank - rightRank;
+            return string.CompareOrdinal(leftName, rightName);
         }
 
         /// <summary>Построить каталоги, если ещё не построены, и освежить интерактивы.</summary>
@@ -198,18 +198,18 @@ namespace SandboxMenu
         {
             try
             {
-                foreach (var m in MasterCatalog.allMasters)
+                foreach (var masterEntry in MasterCatalog.allMasters)
                 {
-                    if (m == null) continue;
-                    var go = m.gameObject;
-                    if (go == null) continue;
-                    var name = go.name;
+                    if (masterEntry == null) continue;
+                    var masterPrefab = masterEntry.gameObject;
+                    if (masterPrefab == null) continue;
+                    var name = masterPrefab.name;
                     bool ally = false;
-                    foreach (var k in AllyKeywords)
+                    foreach (var keyword in AllyKeywords)
                     {
-                        if (name.IndexOf(k, StringComparison.OrdinalIgnoreCase) >= 0) { ally = true; break; }
+                        if (name.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0) { ally = true; break; }
                     }
-                    Masters.Add(new MasterInfo { Name = name, Prefab = go, AllyLike = ally });
+                    Masters.Add(new MasterInfo { Name = name, Prefab = masterPrefab, AllyLike = ally });
                 }
                 Masters.Sort((x, y) => string.CompareOrdinal(x.Name, y.Name));
             }
@@ -227,15 +227,15 @@ namespace SandboxMenu
                     ItemDef def = ItemCatalog.GetItemDef(idx);
                     if (def == null) continue;
                     string token = def.nameToken;
-                    PickupIndex pidx = PickupIndex.none;
-                    try { pidx = PickupCatalog.FindPickupIndex(idx); } catch { }
+                    PickupIndex pickupIndex = PickupIndex.none;
+                    try { pickupIndex = PickupCatalog.FindPickupIndex(idx); } catch { }
                     Items.Add(new ItemInfo
                     {
                         Name = GameApi.Localize(token),
                         Token = token,
                         Def = def,
                         Index = idx,
-                        Pickup = pidx,
+                        Pickup = pickupIndex,
                         Hidden = def.hidden
                     });
                 }
@@ -251,11 +251,11 @@ namespace SandboxMenu
                 foreach (var def in PickupCatalog.allPickups)
                 {
                     if (def == null) continue;
-                    var pidx = def.pickupIndex;
-                    if (!pidx.isValid) continue;
+                    var pickupIndex = def.pickupIndex;
+                    if (!pickupIndex.isValid) continue;
                     string label = GameApi.Localize(def.nameToken);
                     if (string.IsNullOrEmpty(label)) label = def.internalName;
-                    Pickups.Add(new PickupInfo { Name = label, Index = pidx });
+                    Pickups.Add(new PickupInfo { Name = label, Index = pickupIndex });
                 }
                 Pickups.Sort((x, y) => CompareByName(x.Name, y.Name));
             }

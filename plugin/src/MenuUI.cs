@@ -108,14 +108,14 @@ namespace SandboxMenu
             {
                 GUI.matrix = Matrix4x4.Scale(new Vector3(scale, scale, 1f));
             }
-            float vw = Screen.width / scale;
-            float vh = Screen.height / scale;
+            float virtualWidth = Screen.width / scale;
+            float virtualHeight = Screen.height / scale;
 
             // окно не шире экрана и не расширяется под минимальную ширину вкладок
-            float width = Mathf.Min(BaseWidth, Mathf.Max(320f, vw - 24f));
+            float width = Mathf.Min(BaseWidth, Mathf.Max(320f, virtualWidth - 24f));
             _rect.width = width;
-            _rect.x = Mathf.Clamp(_rect.x, 8f, Mathf.Max(8f, vw - width - 8f));
-            _rect.y = Mathf.Clamp(_rect.y, 0f, Mathf.Max(0f, vh - 28f));
+            _rect.x = Mathf.Clamp(_rect.x, 8f, Mathf.Max(8f, virtualWidth - width - 8f));
+            _rect.y = Mathf.Clamp(_rect.y, 0f, Mathf.Max(0f, virtualHeight - 28f));
 
             _rect = GUILayout.Window(WindowId, _rect, DrawWindow, "", Theme.Window);
 

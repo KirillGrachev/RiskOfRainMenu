@@ -93,32 +93,32 @@ namespace SandboxMenu
         private static Group GroupFor(NetworkUser owner, bool create)
         {
             if (owner == null) return null;
-            foreach (var g in _groups)
+            foreach (var group in _groups)
             {
-                if (ReferenceEquals(g.Owner, owner)) return g;
+                if (ReferenceEquals(group.Owner, owner)) return group;
             }
             if (!create) return null;
-            var ng = new Group { Owner = owner };
+            var newGroup = new Group { Owner = owner };
             var cfg = SandboxMenuPlugin.CloneFollowDefault;
-            ng.Follow = cfg == null || cfg.Value;
-            _groups.Add(ng);
-            return ng;
+            newGroup.Follow = cfg == null || cfg.Value;
+            _groups.Add(newGroup);
+            return newGroup;
         }
 
         /// <summary>Желаемая численность для игрока.</summary>
         public static int DesiredFor(NetworkUser owner)
         {
-            var g = GroupFor(owner, false);
-            return g != null ? g.Desired : 0;
+            var group = GroupFor(owner, false);
+            return group != null ? group.Desired : 0;
         }
 
         /// <summary>Сколько клонов игрока живы сейчас.</summary>
         public static int AliveFor(NetworkUser owner)
         {
-            var g = GroupFor(owner, false);
-            if (g == null) return 0;
-            Prune(g);
-            return g.Alive.Count;
+            var group = GroupFor(owner, false);
+            if (group == null) return 0;
+            Prune(group);
+            return group.Alive.Count;
         }
 
         /// <summary>Суммарная живая численность по всем игрокам.</summary>
@@ -127,7 +127,7 @@ namespace SandboxMenu
             get
             {
                 int n = 0;
-                foreach (var g in _groups) { Prune(g); n += g.Alive.Count; }
+                foreach (var group in _groups) { Prune(group); n += group.Alive.Count; }
                 return n;
             }
         }
@@ -135,48 +135,48 @@ namespace SandboxMenu
         /// <summary>Копировать предметы владельца в клонов.</summary>
         public static bool CopyInventoryFor(NetworkUser owner)
         {
-            var g = GroupFor(owner, false);
-            return g == null || g.CopyInventory;
+            var group = GroupFor(owner, false);
+            return group == null || group.CopyInventory;
         }
 
         /// <summary>Копировать loadout владельца (скины, варианты скиллов).</summary>
         public static bool CopyLoadoutFor(NetworkUser owner)
         {
-            var g = GroupFor(owner, false);
-            return g == null || g.CopyLoadout;
+            var group = GroupFor(owner, false);
+            return group == null || group.CopyLoadout;
         }
 
         /// <summary>Следуют ли клоны игрока за ним.</summary>
         public static bool FollowFor(NetworkUser owner)
         {
-            var g = GroupFor(owner, false);
-            return g == null || g.Follow;
+            var group = GroupFor(owner, false);
+            return group == null || group.Follow;
         }
 
         /// <summary>Применить флаги группы одним вызовом (для меню и сети).</summary>
         public static void SetFlagsFor(NetworkUser owner, bool? copyInventory, bool? copyLoadout, bool? follow)
         {
-            var g = GroupFor(owner, true);
-            if (g == null) return;
-            if (copyInventory.HasValue) g.CopyInventory = copyInventory.Value;
-            if (copyLoadout.HasValue) g.CopyLoadout = copyLoadout.Value;
-            if (follow.HasValue) g.Follow = follow.Value;
+            var group = GroupFor(owner, true);
+            if (group == null) return;
+            if (copyInventory.HasValue) group.CopyInventory = copyInventory.Value;
+            if (copyLoadout.HasValue) group.CopyLoadout = copyLoadout.Value;
+            if (follow.HasValue) group.Follow = follow.Value;
         }
 
         /// <summary>Задать желаемую численность; 0 убирает группу.</summary>
         public static void SetDesiredFor(NetworkUser owner, int value)
         {
             value = Mathf.Clamp(value, 0, MaxClones);
-            var g = GroupFor(owner, true);
-            if (g == null) { LastError = Texts.T("не выбран игрок", "no target player selected"); return; }
-            g.Desired = value;
-            if (value == 0) ClearGroup(g, false);
+            var group = GroupFor(owner, true);
+            if (group == null) { LastError = Texts.T("не выбран игрок", "no target player selected"); return; }
+            group.Desired = value;
+            if (value == 0) ClearGroup(group, false);
         }
 
         /// <summary>Полный сброс состояния (вызов при старте плагина).</summary>
         public static void Reset()
         {
-            foreach (var g in _groups) ClearGroup(g, false);
+            foreach (var group in _groups) ClearGroup(group, false);
             _groups.Clear();
             LastPrefabName = "";
             LastError = "";
@@ -187,21 +187,21 @@ namespace SandboxMenu
         /// тело уничтожается здесь же, иначе модель висела бы в сцене навсегда.
         /// Попутно подтягивает ссылку на тело, пока оно ещё не родилось.
         /// </summary>
-        private static void Prune(Group g)
+        private static void Prune(Group group)
         {
-            for (int i = g.Alive.Count - 1; i >= 0; i--)
+            for (int i = group.Alive.Count - 1; i >= 0; i--)
             {
-                var e = g.Alive[i];
+                var e = group.Alive[i];
                 bool masterGone = e.Master == null || e.Master.gameObject == null;
                 bool bodyGone = e.Body == null || e.Body.gameObject == null;
 
-                if (masterGone && bodyGone) { g.Alive.RemoveAt(i); continue; }
+                if (masterGone && bodyGone) { group.Alive.RemoveAt(i); continue; }
 
                 if (masterGone)
                 {
                     // тело без master'а - мертвец: доубираем модель
                     Spawning.NetDestroy(e.Body.gameObject);
-                    g.Alive.RemoveAt(i);
+                    group.Alive.RemoveAt(i);
                     continue;
                 }
 
@@ -220,53 +220,53 @@ namespace SandboxMenu
 
             for (int i = _groups.Count - 1; i >= 0; i--)
             {
-                var g = _groups[i];
-                if (g.Owner == null)
+                var group = _groups[i];
+                if (group.Owner == null)
                 {
                     // игрок вышел - его клонов убираем, чтобы не висели ничьи
-                    ClearGroup(g, false);
+                    ClearGroup(group, false);
                     _groups.RemoveAt(i);
                     continue;
                 }
-                Prune(g);
-                RefreshOwnerRefs(g);
+                Prune(group);
+                RefreshOwnerRefs(group);
 
                 // следование: лидер AI сверяется с текущим телом владельца.
                 // После смены стадии или респауна тело владельца - новый объект,
                 // и без перепривязки клоны оставались бы на старом месте.
-                if (g.OwnerBody != null)
+                if (group.OwnerBody != null)
                 {
-                    foreach (var e in g.Alive)
+                    foreach (var member in group.Alive)
                     {
-                        OwnerBinding.EnsureLeader(e.Master, g.OwnerBody, g.Follow);
+                        OwnerBinding.EnsureLeader(member.Master, group.OwnerBody, group.Follow);
                     }
                 }
 
                 if (!KeepAlive) continue;
-                if (g.Desired <= 0) continue;
-                if (g.OwnerBody == null || g.OwnerMaster == null) continue;
+                if (group.Desired <= 0) continue;
+                if (group.OwnerBody == null || group.OwnerMaster == null) continue;
 
-                while (g.Alive.Count > g.Desired)
+                while (group.Alive.Count > group.Desired)
                 {
-                    var last = g.Alive[g.Alive.Count - 1];
-                    g.Alive.RemoveAt(g.Alive.Count - 1);
+                    var last = group.Alive[group.Alive.Count - 1];
+                    group.Alive.RemoveAt(group.Alive.Count - 1);
                     Spawning.DestroyCharacter(last.Master);
                 }
 
-                if (g.Alive.Count >= g.Desired) continue;
-                if (Time.unscaledTime < g.NextSpawnAt) continue;
+                if (group.Alive.Count >= group.Desired) continue;
+                if (Time.unscaledTime < group.NextSpawnAt) continue;
 
-                var clone = SpawnOne(g);
-                if (clone != null) g.Alive.Add(clone);
-                else g.NextSpawnAt = Time.unscaledTime + Mathf.Max(1f, RespawnDelay());
+                var clone = SpawnOne(group);
+                if (clone != null) group.Alive.Add(clone);
+                else group.NextSpawnAt = Time.unscaledTime + Mathf.Max(1f, RespawnDelay());
 
                 // эффекты владельца досинхронизируются периодически: предметы,
                 // взятые владельцем после спавна, доедают до клонов (минус 9)
-                if (g.CopyInventory && g.OwnerMaster != null &&
-                    Time.unscaledTime - g.LastSyncAt > 4f)
+                if (group.CopyInventory && group.OwnerMaster != null &&
+                    Time.unscaledTime - group.LastSyncAt > 4f)
                 {
-                    g.LastSyncAt = Time.unscaledTime;
-                    foreach (var e in g.Alive) SyncInventory(e.Master, g.OwnerMaster);
+                    group.LastSyncAt = Time.unscaledTime;
+                    foreach (var member in group.Alive) SyncInventory(member.Master, group.OwnerMaster);
                 }
             }
         }
@@ -275,19 +275,19 @@ namespace SandboxMenu
         /// Освежает тело/master владельца: после смены стадии или респауна тело -
         /// новый объект, ссылки группы должны указывать на актуальный.
         /// </summary>
-        private static void RefreshOwnerRefs(Group g)
+        private static void RefreshOwnerRefs(Group group)
         {
             try
             {
-                if (g.Owner == null) return;
-                var b = g.Owner.GetCurrentBody();
-                if (b != null && !ReferenceEquals(b, g.OwnerBody))
+                if (group.Owner == null) return;
+                var b = group.Owner.GetCurrentBody();
+                if (b != null && !ReferenceEquals(b, group.OwnerBody))
                 {
-                    g.OwnerBody = b;
+                    group.OwnerBody = b;
                 }
-                var m = g.Owner.master;
-                if (m != null) g.OwnerMaster = m;
-                else if (b != null) g.OwnerMaster = b.master;
+                var m = group.Owner.master;
+                if (m != null) group.OwnerMaster = m;
+                else if (b != null) group.OwnerMaster = b.master;
             }
             catch (Exception e) { GameApi.WarnOnce("CloneManager.RefreshOwnerRefs", e); }
         }
@@ -306,15 +306,15 @@ namespace SandboxMenu
         /// </summary>
         public static void SpawnNow(NetworkUser owner, int count)
         {
-            var g = GroupFor(owner, true);
-            if (g == null) { GameApi.SayErr(Texts.T("клоны: не выбран игрок", "clones: no target player")); return; }
-            RefreshOwnerRefs(g);
-            if (g.OwnerBody == null || g.OwnerMaster == null)
+            var group = GroupFor(owner, true);
+            if (group == null) { GameApi.SayErr(Texts.T("клоны: не выбран игрок", "clones: no target player")); return; }
+            RefreshOwnerRefs(group);
+            if (group.OwnerBody == null || group.OwnerMaster == null)
             {
-                g.OwnerBody = PlayerTargets.BodyOf(owner);
-                g.OwnerMaster = PlayerTargets.MasterOf(owner);
+                group.OwnerBody = PlayerTargets.BodyOf(owner);
+                group.OwnerMaster = PlayerTargets.MasterOf(owner);
             }
-            if (g.OwnerBody == null || g.OwnerMaster == null)
+            if (group.OwnerBody == null || group.OwnerMaster == null)
             {
                 GameApi.SayErr(Texts.T("клоны: у цели нет тела (нужен забег)", "clones: target has no body (enter a run)"));
                 return;
@@ -323,18 +323,18 @@ namespace SandboxMenu
             int ok = 0;
             for (int i = 0; i < count; i++)
             {
-                var c = SpawnOne(g);
+                var c = SpawnOne(group);
                 if (c == null) break;
-                g.Alive.Add(c);
+                group.Alive.Add(c);
                 ok++;
             }
-            g.Desired = Mathf.Clamp(g.Desired + ok, 0, MaxClones);
+            group.Desired = Mathf.Clamp(group.Desired + ok, 0, MaxClones);
 
             if (ok > 0)
             {
                 GameApi.SayOk(Texts.T(
-                    $"клоны: +{ok} для {PlayerTargets.DisplayName(owner)}, в строю {g.Alive.Count}",
-                    $"clones: +{ok} for {PlayerTargets.DisplayName(owner)}, alive {g.Alive.Count}"));
+                    $"клоны: +{ok} для {PlayerTargets.DisplayName(owner)}, в строю {group.Alive.Count}",
+                    $"clones: +{ok} for {PlayerTargets.DisplayName(owner)}, alive {group.Alive.Count}"));
             }
             else
             {
@@ -346,19 +346,19 @@ namespace SandboxMenu
         /// <summary>Убрать всех клонов игрока (тело и master уничтожаются).</summary>
         public static void ClearFor(NetworkUser owner)
         {
-            var g = GroupFor(owner, false);
-            if (g == null) return;
-            g.Desired = 0;
-            ClearGroup(g, true);
+            var group = GroupFor(owner, false);
+            if (group == null) return;
+            group.Desired = 0;
+            ClearGroup(group, true);
         }
 
         /// <summary>Убрать всех клонов всех игроков.</summary>
         public static void ClearAll()
         {
-            foreach (var g in _groups)
+            foreach (var group in _groups)
             {
-                g.Desired = 0;
-                ClearGroup(g, false);
+                group.Desired = 0;
+                ClearGroup(group, false);
             }
             _groups.Clear();
             OwnerBinding.Clear();
@@ -370,10 +370,10 @@ namespace SandboxMenu
         }
 
         /// <summary>Уничтожить группу целиком: каждая пара тело+master.</summary>
-        private static void ClearGroup(Group g, bool announce)
+        private static void ClearGroup(Group group, bool announce)
         {
-            foreach (var e in g.Alive) Spawning.DestroyCharacter(e.Master);
-            g.Alive.Clear();
+            foreach (var clone in group.Alive) Spawning.DestroyCharacter(clone.Master);
+            group.Alive.Clear();
             if (announce) GameApi.SayOk(Texts.T("клоны: убраны клоны игрока", "clones: removed for this player"));
         }
 
@@ -428,10 +428,10 @@ namespace SandboxMenu
         }
 
         /// <summary>Создать одного клона группы; null при ошибке (см. LastError).</summary>
-        private static Entry SpawnOne(Group g)
+        private static Entry SpawnOne(Group group)
         {
-            var src = g.OwnerMaster;
-            var body = g.OwnerBody;
+            var src = group.OwnerMaster;
+            var body = group.OwnerBody;
             if (src == null || body == null)
             {
                 LastError = Texts.T("у цели нет тела/master'а (нужен забег)", "target has no body/master (enter a run)");
@@ -444,7 +444,7 @@ namespace SandboxMenu
             Loadout loadout = null;
             try
             {
-                if (g.CopyLoadout && src.loadout != null)
+                if (group.CopyLoadout && src.loadout != null)
                 {
                     loadout = new Loadout();
                     src.loadout.Copy(loadout);
@@ -453,7 +453,7 @@ namespace SandboxMenu
             catch (Exception e) { GameApi.Warn("Loadout.Copy", e); loadout = null; }
 
             Inventory inv = null;
-            try { if (g.CopyInventory) inv = src.inventory; }
+            try { if (group.CopyInventory) inv = src.inventory; }
             catch (Exception e) { GameApi.Warn("CharacterMaster.inventory", e); }
 
             TeamIndex team = TeamIndex.Player;
@@ -464,27 +464,27 @@ namespace SandboxMenu
             }
             catch (Exception e) { GameApi.WarnOnce("teamComponent", e); }
 
-            var pos = PlayerTargets.PointOnRing(g.Owner, g.Alive.Count + 1, g.Desired + 2, 3.5f);
+            var pos = PlayerTargets.PointOnRing(group.Owner, group.Alive.Count + 1, group.Desired + 2, 3.5f);
             if (pos == Vector3.zero)
             {
                 var t = body.coreTransform;
                 pos = (t != null ? t.position : body.footPosition) + Vector3.up;
             }
 
-            var master = Spawning.Summon(prefab, pos, PlayerTargets.RotationOf(g.Owner), team,
+            var master = Spawning.Summon(prefab, pos, PlayerTargets.RotationOf(group.Owner), team,
                                          body.gameObject, true, loadout, inv, true);
             if (master == null) return null;
 
             // эффекты владельца доедают после спавна: inventoryToCopy может не
             // покрыть разницу, а клон обязан драться предметами своего хозяина
-            if (g.CopyInventory) CopyOwnerEffects(master, src);
+            if (group.CopyInventory) CopyOwnerEffects(master, src);
 
             CharacterBody cloneBody = null;
             try { cloneBody = master.GetBody(); }
             catch (Exception e) { GameApi.WarnOnce("GetBody on spawn", e); }
             var entry = new Entry { Master = master, Body = cloneBody };
             OwnerBinding.Bind(master, src, body);
-            OwnerBinding.EnsureLeader(master, body, g.Follow);
+            OwnerBinding.EnsureLeader(master, body, group.Follow);
             return entry;
         }
 

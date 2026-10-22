@@ -32,41 +32,41 @@ namespace SandboxMenu
         /// <summary>Выдать N стаков предмета цели.</summary>
         public static void GiveItem(ItemIndex index, int count)
         {
-            var t = Target;
-            if (Local) { RunGiveItem(t, index, count); return; }
-            Send(new SandboxRequest { Action = ActionCode.GiveItem, TargetNetId = TargetId(t), P1 = (int)index, P2 = count });
+            var target = Target;
+            if (Local) { RunGiveItem(target, index, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.GiveItem, TargetNetId = TargetId(target), P1 = (int)index, P2 = count });
         }
 
         /// <summary>Снять N стаков предмета с цели (зеркало выдачи).</summary>
         public static void RemoveItem(ItemIndex index, int count)
         {
-            var t = Target;
-            if (Local) { RunRemoveItem(t, index, count); return; }
-            Send(new SandboxRequest { Action = ActionCode.RemoveItem, TargetNetId = TargetId(t), P1 = (int)index, P2 = count });
+            var target = Target;
+            if (Local) { RunRemoveItem(target, index, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.RemoveItem, TargetNetId = TargetId(target), P1 = (int)index, P2 = count });
         }
 
         /// <summary>Очистить инвентарь цели целиком.</summary>
         public static void ClearItems()
         {
-            var t = Target;
-            if (Local) { RunClearItems(t); return; }
-            Send(new SandboxRequest { Action = ActionCode.ClearItems, TargetNetId = TargetId(t) });
+            var target = Target;
+            if (Local) { RunClearItems(target); return; }
+            Send(new SandboxRequest { Action = ActionCode.ClearItems, TargetNetId = TargetId(target) });
         }
 
         /// <summary>Выдать цели по N штук каждого нескрытого предмета каталога.</summary>
         public static void GiveAllItems(int count)
         {
-            var t = Target;
-            if (Local) { RunGiveAllItems(t, count); return; }
-            Send(new SandboxRequest { Action = ActionCode.GiveAllItems, TargetNetId = TargetId(t), P1 = count });
+            var target = Target;
+            if (Local) { RunGiveAllItems(target, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.GiveAllItems, TargetNetId = TargetId(target), P1 = count });
         }
 
         /// <summary>Выбросить N пикапов у цели.</summary>
         public static void DropPickup(PickupIndex index, int count)
         {
-            var t = Target;
-            if (Local) { RunDropPickup(t, index, count); return; }
-            Send(new SandboxRequest { Action = ActionCode.DropPickup, TargetNetId = TargetId(t), P1 = index.value, P2 = count });
+            var target = Target;
+            if (Local) { RunDropPickup(target, index, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.DropPickup, TargetNetId = TargetId(target), P1 = index.value, P2 = count });
         }
 
         /// <summary>Убрать весь лежащий в мире дроп (зеркало дропа).</summary>
@@ -79,9 +79,9 @@ namespace SandboxMenu
         /// <summary>Убрать лишний дроп рядом с целью (радиус 15, режим по умолчанию).</summary>
         public static void ClearDropsNear()
         {
-            var t = Target;
-            if (Local) { RunClearDropsNear(t); return; }
-            Send(new SandboxRequest { Action = ActionCode.ClearDropsNear, TargetNetId = TargetId(t) });
+            var target = Target;
+            if (Local) { RunClearDropsNear(target); return; }
+            Send(new SandboxRequest { Action = ActionCode.ClearDropsNear, TargetNetId = TargetId(target) });
         }
 
         /// <summary>Убрать только тот дроп, который выбросило меню.</summary>
@@ -94,9 +94,9 @@ namespace SandboxMenu
         /// <summary>Призвать N персонажей префаба на команде team рядом с целью.</summary>
         public static void SpawnMaster(GameObject prefab, string name, TeamIndex team, int count)
         {
-            var t = Target;
-            if (Local) { RunSpawnMaster(t, prefab, team, count); return; }
-            Send(new SandboxRequest { Action = ActionCode.SpawnMaster, TargetNetId = TargetId(t), P1 = count, Team = (byte)team, Name = name });
+            var target = Target;
+            if (Local) { RunSpawnMaster(target, prefab, team, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.SpawnMaster, TargetNetId = TargetId(target), P1 = count, Team = (byte)team, Name = name });
         }
 
         /// <summary>Убрать всех призванных меню персонажей (зеркало спавна).</summary>
@@ -116,9 +116,9 @@ namespace SandboxMenu
         /// <summary>Заспавнить N объектов сцены (сундуки, автоматы, алтари) у цели.</summary>
         public static void SpawnProp(SpawnCard card, string name, int count)
         {
-            var t = Target;
-            if (Local) { RunSpawnProp(t, card, count); return; }
-            Send(new SandboxRequest { Action = ActionCode.SpawnProp, TargetNetId = TargetId(t), P1 = count, Name = name });
+            var target = Target;
+            if (Local) { RunSpawnProp(target, card, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.SpawnProp, TargetNetId = TargetId(target), P1 = count, Name = name });
         }
 
         /// <summary>Убрать все заспавненные меню объекты (зеркало спавна).</summary>
@@ -131,25 +131,25 @@ namespace SandboxMenu
         /// <summary>Задать желаемую численность клонов цели.</summary>
         public static void CloneSetDesired(int value)
         {
-            var t = Target;
-            if (Local) { CloneManager.SetDesiredFor(t, value); return; }
-            Send(new SandboxRequest { Action = ActionCode.CloneSetDesired, TargetNetId = TargetId(t), P1 = value });
+            var target = Target;
+            if (Local) { CloneManager.SetDesiredFor(target, value); return; }
+            Send(new SandboxRequest { Action = ActionCode.CloneSetDesired, TargetNetId = TargetId(target), P1 = value });
         }
 
         /// <summary>Мгновенно добавить N клонов цели.</summary>
         public static void CloneSpawnNow(int count)
         {
-            var t = Target;
-            if (Local) { CloneManager.SpawnNow(t, count); return; }
-            Send(new SandboxRequest { Action = ActionCode.CloneSpawnNow, TargetNetId = TargetId(t), P1 = count });
+            var target = Target;
+            if (Local) { CloneManager.SpawnNow(target, count); return; }
+            Send(new SandboxRequest { Action = ActionCode.CloneSpawnNow, TargetNetId = TargetId(target), P1 = count });
         }
 
         /// <summary>Убрать клонов цели.</summary>
         public static void CloneClearTarget()
         {
-            var t = Target;
-            if (Local) { CloneManager.ClearFor(t); return; }
-            Send(new SandboxRequest { Action = ActionCode.CloneClearTarget, TargetNetId = TargetId(t) });
+            var target = Target;
+            if (Local) { CloneManager.ClearFor(target); return; }
+            Send(new SandboxRequest { Action = ActionCode.CloneClearTarget, TargetNetId = TargetId(target) });
         }
 
         /// <summary>Убрать клонов всех игроков.</summary>
@@ -162,10 +162,10 @@ namespace SandboxMenu
         /// <summary>Флаги группы клонов цели: копирование предметов/loadout, следование.</summary>
         public static void CloneSetFlags(bool copyInventory, bool copyLoadout, bool follow)
         {
-            var t = Target;
-            if (Local) { CloneManager.SetFlagsFor(t, copyInventory, copyLoadout, follow); return; }
+            var target = Target;
+            if (Local) { CloneManager.SetFlagsFor(target, copyInventory, copyLoadout, follow); return; }
             int mask = (copyInventory ? 1 : 0) | (copyLoadout ? 2 : 0) | (follow ? 4 : 0);
-            Send(new SandboxRequest { Action = ActionCode.CloneSetFlags, TargetNetId = TargetId(t), P1 = mask });
+            Send(new SandboxRequest { Action = ActionCode.CloneSetFlags, TargetNetId = TargetId(target), P1 = mask });
         }
 
         /// <summary>Глобальный флаг поддержания численности клонов.</summary>

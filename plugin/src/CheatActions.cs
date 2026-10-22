@@ -47,20 +47,20 @@ namespace SandboxMenu {
         /// <summary>Включить/выключить флаг чита у цели (GodModeAll - глобальный).</summary>
         public static void SetCheatFlag(CheatFlag flag, bool on) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunSetCheatFlag(t, (int)flag, on);
+                RunSetCheatFlag(target, (int)flag, on);
                 return;
             }
 
             // оптимистичное зеркало: вкладка читает локальное состояние,
             // правда остаётся на сервере (тот же приём, что CloneManager)
-            CheatState.SetFlag(flag == CheatFlag.GodModeAll ? 0u : TargetId(t), flag, on);
+            CheatState.SetFlag(flag == CheatFlag.GodModeAll ? 0u : TargetId(target), flag, on);
 
             Send(new SandboxRequest {
                 Action = ActionCode.SetCheatFlag,
-                TargetNetId = TargetId(t),
+                TargetNetId = TargetId(target),
                 P1 = (int)flag,
                 P2 = on ? 1 : 0
             });
@@ -70,18 +70,18 @@ namespace SandboxMenu {
         /// <summary>Установить множитель (проценты) у цели.</summary>
         public static void SetCheatValue(CheatValue value, int pct) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunSetCheatValue(t, (int)value, pct);
+                RunSetCheatValue(target, (int)value, pct);
                 return;
             }
 
-            CheatState.SetValue(TargetId(t), value, pct);
+            CheatState.SetValue(TargetId(target), value, pct);
 
             Send(new SandboxRequest {
                 Action = ActionCode.SetCheatValue,
-                TargetNetId = TargetId(t),
+                TargetNetId = TargetId(target),
                 P1 = (int)value,
                 P2 = pct
             });
@@ -91,58 +91,58 @@ namespace SandboxMenu {
         /// <summary>Полное лечение цели (здоровье, щит, барьер).</summary>
         public static void HealTarget() {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunHealTarget(t);
+                RunHealTarget(target);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.HealTarget, TargetNetId = TargetId(t) });
+            Send(new SandboxRequest { Action = ActionCode.HealTarget, TargetNetId = TargetId(target) });
 
         }
 
         /// <summary>Убить врагов: radius 0 - вся карта, иначе вокруг цели.</summary>
         public static void KillEnemies(int radius) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunKillEnemies(t, radius);
+                RunKillEnemies(target, radius);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.KillEnemies, TargetNetId = TargetId(t), P1 = radius });
+            Send(new SandboxRequest { Action = ActionCode.KillEnemies, TargetNetId = TargetId(target), P1 = radius });
 
         }
 
         /// <summary>Разово сбросить перезарядки умений и оборудования цели.</summary>
         public static void ResetCooldowns() {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunResetCooldowns(t);
+                RunResetCooldowns(target);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.ResetCooldowns, TargetNetId = TargetId(t) });
+            Send(new SandboxRequest { Action = ActionCode.ResetCooldowns, TargetNetId = TargetId(target) });
 
         }
 
         /// <summary>Выдать стаки бафа цели (BuffIndex числом).</summary>
         public static void GiveBuff(int buffIndexValue, int stacks) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunGiveBuff(t, buffIndexValue, stacks);
+                RunGiveBuff(target, buffIndexValue, stacks);
                 return;
             }
 
             Send(new SandboxRequest {
                 Action = ActionCode.GiveBuff,
-                TargetNetId = TargetId(t),
+                TargetNetId = TargetId(target),
                 P1 = buffIndexValue,
                 P2 = stacks
             });
@@ -152,43 +152,43 @@ namespace SandboxMenu {
         /// <summary>Установить войд-монеты цели (третья валюта игры, SOTV).</summary>
         public static void SetVoidCoins(int amount) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunSetVoidCoins(t, amount);
+                RunSetVoidCoins(target, amount);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.SetVoidCoins, TargetNetId = TargetId(t), P1 = amount });
+            Send(new SandboxRequest { Action = ActionCode.SetVoidCoins, TargetNetId = TargetId(target), P1 = amount });
 
         }
 
         /// <summary>Добавить войд-монеты цели.</summary>
         public static void GiveVoidCoins(int amount) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunGiveVoidCoins(t, amount);
+                RunGiveVoidCoins(target, amount);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.GiveVoidCoins, TargetNetId = TargetId(t), P1 = amount });
+            Send(new SandboxRequest { Action = ActionCode.GiveVoidCoins, TargetNetId = TargetId(target), P1 = amount });
 
         }
 
         /// <summary>Снять стаки бафа с цели (зеркало GiveBuff).</summary>
         public static void RemoveBuff(int buffIndexValue, int stacks) {
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunRemoveBuff(t, buffIndexValue, stacks);
+                RunRemoveBuff(target, buffIndexValue, stacks);
                 return;
             }
 
             Send(new SandboxRequest {
                 Action = ActionCode.RemoveBuff,
-                TargetNetId = TargetId(t),
+                TargetNetId = TargetId(target),
                 P1 = buffIndexValue,
                 P2 = stacks
             });
@@ -198,98 +198,98 @@ namespace SandboxMenu {
         /// <summary>Снять с цели все бафы и дебафы.</summary>
         public static void ClearBuffs() {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunClearBuffs(t);
+                RunClearBuffs(target);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.ClearBuffs, TargetNetId = TargetId(t) });
+            Send(new SandboxRequest { Action = ActionCode.ClearBuffs, TargetNetId = TargetId(target) });
 
         }
 
         /// <summary>Установить деньги цели (мастер хранит кошелёк игрока).</summary>
         public static void SetMoney(int amount) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunSetMoney(t, amount);
+                RunSetMoney(target, amount);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.SetMoney, TargetNetId = TargetId(t), P1 = amount });
+            Send(new SandboxRequest { Action = ActionCode.SetMoney, TargetNetId = TargetId(target), P1 = amount });
 
         }
 
         /// <summary>Добавить деньги цели.</summary>
         public static void GiveMoney(int amount) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunGiveMoney(t, amount);
+                RunGiveMoney(target, amount);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.GiveMoney, TargetNetId = TargetId(t), P1 = amount });
+            Send(new SandboxRequest { Action = ActionCode.GiveMoney, TargetNetId = TargetId(target), P1 = amount });
 
         }
 
         /// <summary>Установить лунные монеты игрока (валюта профиля).</summary>
         public static void SetLunarCoins(int amount) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunSetLunarCoins(t, amount);
+                RunSetLunarCoins(target, amount);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.SetLunarCoins, TargetNetId = TargetId(t), P1 = amount });
+            Send(new SandboxRequest { Action = ActionCode.SetLunarCoins, TargetNetId = TargetId(target), P1 = amount });
 
         }
 
         /// <summary>Добавить лунные монеты игроку.</summary>
         public static void GiveLunarCoins(int amount) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunGiveLunarCoins(t, amount);
+                RunGiveLunarCoins(target, amount);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.GiveLunarCoins, TargetNetId = TargetId(t), P1 = amount });
+            Send(new SandboxRequest { Action = ActionCode.GiveLunarCoins, TargetNetId = TargetId(target), P1 = amount });
 
         }
 
         /// <summary>Установить уровень команды (в RoR2 уровень общий на команду).</summary>
         public static void SetTeamLevel(int level) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
                 RunSetTeamLevel(level);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.SetTeamLevel, TargetNetId = TargetId(t), P1 = level });
+            Send(new SandboxRequest { Action = ActionCode.SetTeamLevel, TargetNetId = TargetId(target), P1 = level });
 
         }
 
         /// <summary>Добавить опыт команде.</summary>
         public static void GiveExperience(int amount) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
                 RunGiveExperience(amount);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.GiveExperience, TargetNetId = TargetId(t), P1 = amount });
+            Send(new SandboxRequest { Action = ActionCode.GiveExperience, TargetNetId = TargetId(target), P1 = amount });
 
         }
 
@@ -299,14 +299,14 @@ namespace SandboxMenu {
         /// </summary>
         public static void RespawnAs(string bodyName) {
 
-            var t = Target;
+            var target = Target;
 
             if (Local) {
-                RunRespawnAs(t, bodyName);
+                RunRespawnAs(target, bodyName);
                 return;
             }
 
-            Send(new SandboxRequest { Action = ActionCode.RespawnAs, TargetNetId = TargetId(t), Name = bodyName });
+            Send(new SandboxRequest { Action = ActionCode.RespawnAs, TargetNetId = TargetId(target), Name = bodyName });
 
         }
 
@@ -380,7 +380,7 @@ namespace SandboxMenu {
 
             if (!CheatState.IsKnownFlag(flagValue)) {
 
-                GameApi.Warn("SetCheatFlag", new NotSupportedException("flag id " + flagValue));
+                GameApi.Warn("SetCheatFlag", new NotSupportedException("flag targetNetId " + flagValue));
                 return;
 
             }
@@ -397,16 +397,16 @@ namespace SandboxMenu {
 
             }
 
-            uint id = TargetId(target);
+            uint targetNetId = TargetId(target);
 
-            if (id == 0u) {
+            if (targetNetId == 0u) {
 
                 GameApi.SayErr(Texts.T("чит: нет цели", "cheat: no target"));
                 return;
 
             }
 
-            CheatState.SetFlag(id, flag, on);
+            CheatState.SetFlag(targetNetId, flag, on);
 
             // «без перезарядки» применяем сразу, не дожидаясь тика
             if (flag == CheatFlag.NoCooldown && on) {
@@ -469,14 +469,14 @@ namespace SandboxMenu {
 
             if (!CheatState.IsKnownValue(valueId)) {
 
-                GameApi.Warn("SetCheatValue", new NotSupportedException("value id " + valueId));
+                GameApi.Warn("SetCheatValue", new NotSupportedException("value targetNetId " + valueId));
                 return;
 
             }
 
-            uint id = TargetId(target);
+            uint targetNetId = TargetId(target);
 
-            if (id == 0u) {
+            if (targetNetId == 0u) {
 
                 GameApi.SayErr(Texts.T("чит: нет цели", "cheat: no target"));
                 return;
@@ -485,7 +485,7 @@ namespace SandboxMenu {
 
             var value = (CheatValue)valueId;
             int clamped = CheatState.ClampPct(pct);
-            CheatState.SetValue(id, value, clamped);
+            CheatState.SetValue(targetNetId, value, clamped);
 
             // скорости применяются в RecalculateStats - инициируем пересчёт,
             // чтобы изменение подействовало сразу, а не при следующем бафе

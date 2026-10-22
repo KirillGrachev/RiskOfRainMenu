@@ -279,8 +279,8 @@ namespace SandboxMenu {
         /// камеры или рамка вышла неприлично большой (объект вплотную).</summary>
         private static bool DrawBoundsBox(Camera camera, Bounds bounds, float screenHeight) {
 
-            float x0 = float.MaxValue, y0 = float.MaxValue;
-            float x1 = float.MinValue, y1 = float.MinValue;
+            float left = float.MaxValue, top = float.MaxValue;
+            float right = float.MinValue, bottom = float.MinValue;
 
             for (int i = 0; i < 8; i++) {
 
@@ -295,29 +295,29 @@ namespace SandboxMenu {
                     return false;
                 }
 
-                float sx = screen.x;
-                float sy = screenHeight - screen.y;
+                float screenX = screen.x;
+                float screenY = screenHeight - screen.y;
 
-                if (sx < x0) x0 = sx;
-                if (sx > x1) x1 = sx;
-                if (sy < y0) y0 = sy;
-                if (sy > y1) y1 = sy;
+                if (screenX < left) left = screenX;
+                if (screenX > right) right = screenX;
+                if (screenY < top) top = screenY;
+                if (screenY > bottom) bottom = screenY;
 
             }
 
-            float width = x1 - x0;
-            float height = y1 - y0;
+            float width = right - left;
+            float height = bottom - top;
 
             if (width < 2f || height < 2f || width > Screen.width * 1.5f || height > screenHeight * 1.5f) {
                 return false;
             }
 
-            const float t = 1.5f;
+            const float thickness = 1.5f;
 
-            GUI.Box(new Rect(x0, y0, width, t), GUIContent.none, Theme.EspBox);
-            GUI.Box(new Rect(x0, y1 - t, width, t), GUIContent.none, Theme.EspBox);
-            GUI.Box(new Rect(x0, y0, t, height), GUIContent.none, Theme.EspBox);
-            GUI.Box(new Rect(x1 - t, y0, t, height), GUIContent.none, Theme.EspBox);
+            GUI.Box(new Rect(left, top, width, thickness), GUIContent.none, Theme.EspBox);
+            GUI.Box(new Rect(left, bottom - thickness, width, thickness), GUIContent.none, Theme.EspBox);
+            GUI.Box(new Rect(left, top, thickness, height), GUIContent.none, Theme.EspBox);
+            GUI.Box(new Rect(right - thickness, top, thickness, height), GUIContent.none, Theme.EspBox);
 
             return true;
 
