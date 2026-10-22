@@ -67,8 +67,10 @@ namespace SandboxMenu
 
         private static readonly List<Group> _groups = new List<Group>();
 
-        /// <summary>Поддерживать численность: погибшие клоны возвращаются.</summary>
-        public static bool KeepAlive = true;
+        /// <summary>Поддерживать численность: погибшие клоны возвращаются.
+        /// По умолчанию выключено - численность держит игрок вручную (тумблер
+        /// «держать число» вкладки Клоны), автореспаун не мешает сценариям.</summary>
+        public static bool KeepAlive = false;
 
         /// <summary>Имя префаба последнего спавна - для строки состояния меню.</summary>
         public static string LastPrefabName = "";
@@ -82,8 +84,8 @@ namespace SandboxMenu
             get
             {
                 var c = SandboxMenuPlugin.CloneMaxCount;
-                int v = c != null ? c.Value : 20;
-                return v < 1 ? 20 : v;
+                int v = c != null ? c.Value : 50;
+                return v < 1 ? 50 : v;
             }
         }
 

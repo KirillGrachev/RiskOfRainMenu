@@ -92,8 +92,8 @@ namespace SandboxMenu
                 "Pause before respawning a clone that died (0 = instantly).");
             CloneFollowDefault = Config.Bind("Clone", "FollowByDefault", true,
                 "New clone groups follow their owner by default (off = hold position).");
-            CloneMaxCount = Config.Bind("Clone", "MaxClones", 20,
-                "Hard cap of clones per player (slider and requests are clamped to it).");
+            CloneMaxCount = Config.Bind("Clone", "MaxClones", 50,
+                "Hard cap of clones per player (slider and requests are clamped to it). 50 by default: 30+ clones spawn without editing the config; the cap still guards the server.");
             RemoteTargets = Config.Bind("Network", "RemoteTargets", "any",
                 "any - clients may act on any player; self - clients may act only on themselves.");
 
